@@ -1,0 +1,1028 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<style>
+    .dashboard-container {
+        max-width: 1400px;
+        margin: 4rem auto;
+        padding: 0 2rem;
+        display: grid;
+        grid-template-columns: 250px 1fr;
+        gap: 3rem;
+    }
+    
+    .sidebar {
+        background-color: var(--color-bg-secondary);
+        padding: 2rem;
+        border-radius: 8px;
+        height: fit-content;
+        position: sticky;
+        top: 100px;
+    }
+    
+    .sidebar h2 {
+        font-size: 1.5rem;
+        color: var(--color-accent);
+        margin-bottom: 2rem;
+        font-family: var(--font-heading);
+    }
+    
+    .nav-link {
+        display: block;
+        padding: 1rem 0;
+        color: var(--color-text-muted);
+        font-weight: 600;
+        border-bottom: 1px solid var(--color-border);
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+    
+    .nav-link:last-child {
+        border-bottom: none;
+    }
+    
+    .nav-link:hover, .nav-link.active {
+        color: var(--color-text);
+        padding-left: 10px;
+        border-left: 3px solid var(--color-accent);
+    }
+    
+    .admin-panel {
+        display: none;
+        animation: fadeIn var(--transition-fast);
+    }
+    
+    .admin-panel.active {
+        display: block;
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1.5rem;
+        margin-bottom: 3rem;
+    }
+    
+    .stat-card {
+        background-color: var(--color-bg-secondary);
+        padding: 2rem;
+        border-radius: 8px;
+        border-top: 4px solid var(--color-accent);
+    }
+    
+    .stat-card h3 {
+        font-size: 0.9rem;
+        color: var(--color-text-muted);
+        margin-bottom: 1rem;
+    }
+    
+    .stat-card .value {
+        font-size: 2.5rem;
+        font-family: var(--font-heading);
+        font-weight: 800;
+    }
+    
+    .dashboard-card {
+        background-color: var(--color-bg-secondary);
+        border-radius: 8px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .panel-header {
+        font-family: var(--font-heading);
+        font-size: 1.5rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 1px solid var(--color-border);
+        padding-bottom: 1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .data-table th, .data-table td {
+        padding: 1rem;
+        text-align: left;
+        border-bottom: 1px solid var(--color-border);
+    }
+    
+    .data-table th {
+        color: var(--color-text-muted);
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+        letter-spacing: 1px;
+    }
+    
+    .status-badge {
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    
+    .status-processing { background-color: rgba(255, 165, 0, 0.2); color: orange; }
+    .status-shipped { background-color: rgba(16, 185, 129, 0.2); color: #10B981; }
+    
+    /* Modal Styles */
+    .modal-overlay {
+        position: fixed;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.8);
+        display: none;
+        align-items: center; justify-content: center;
+        z-index: 1000;
+        backdrop-filter: blur(5px);
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.6);
+      justify-content: center;
+      align-items: center;
+      z-index: 10000;
+    }
+    .modal-box {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      color: black;
+      text-align: center;
+    }
+    .modal-box button {
+      padding: 8px 16px;
+      margin: 10px 5px 0 5px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    #confirmDelete { background: #ff3333; color: white; }
+    #confirmCancel { background: #ccc; color: black; }
+    .modal-content {
+        background: var(--color-bg-secondary);
+        padding: 2.5rem;
+        border-radius: 8px;
+        width: 100%;
+        max-width: 500px;
+        border-top: 4px solid var(--color-accent);
+    }
+    .form-group { margin-bottom: 1.5rem; }
+    .form-control {
+        width: 100%; padding: 0.8rem;
+        background: var(--color-bg);
+        border: 1px solid var(--color-border);
+        color: var(--color-text); border-radius: 4px;
+    }
+    .action-btn {
+        background: none; border: none; cursor: pointer; color: var(--color-text-muted);
+    }
+    .action-btn:hover { color: var(--color-accent); }
+    .delete-btn:hover { color: #ff3333; }
+    
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    
+    /* Toast Notification */
+    .toast-notification {
+        position: fixed;
+        bottom: -80px;
+        right: 30px;
+        background: linear-gradient(135deg, var(--color-accent), #c2185b);
+        color: #fff;
+        padding: 1rem 1.5rem;
+        border-radius: 8px;
+        font-family: var(--font-heading);
+        font-weight: 600;
+        font-size: 0.9rem;
+        z-index: 99999;
+        box-shadow: 0 8px 25px rgba(255, 0, 85, 0.4);
+        transition: bottom 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .toast-notification.show {
+        bottom: 30px;
+    }
+    
+    /* Category Toggle Switch */
+    .toggle-switch {
+        position: relative;
+        display: inline-block;
+        width: 44px;
+        height: 24px;
+    }
+    .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+    .toggle-slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background-color: #444;
+        border-radius: 24px;
+        transition: 0.3s;
+    }
+    .toggle-slider::before {
+        content: '';
+        position: absolute;
+        height: 18px;
+        width: 18px;
+        left: 3px;
+        bottom: 3px;
+        background-color: #fff;
+        border-radius: 50%;
+        transition: 0.3s;
+    }
+    .toggle-switch input:checked + .toggle-slider {
+        background-color: #10B981;
+    }
+    .toggle-switch input:checked + .toggle-slider::before {
+        transform: translateX(20px);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <aside class="sidebar">
+        <h2>ADMIN PORTAL</h2>
+        <a class="nav-link active" data-target="panel-overview">Overview</a>
+        <a class="nav-link" data-target="panel-products">Products</a>
+        <a class="nav-link" data-target="panel-categories">Categories</a>
+        <a class="nav-link" data-target="panel-orders">Orders</a>
+        <a class="nav-link" data-target="panel-users">Users</a>
+        <a class="nav-link" data-target="panel-reviews">Reviews</a>
+        <a class="nav-link" data-target="panel-offers">Offers</a>
+    </aside>
+    
+    <main id="admin-main">
+        
+        <!-- OVERVIEW PANEL -->
+        <section id="panel-overview" class="admin-panel active">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3>TOTAL SALES</h3>
+                    <div class="value" style="color: var(--color-accent);">₹{{ total_revenue|floatformat:2 }}</div>
+                </div>
+                <div class="stat-card">
+                    <h3>TOTAL ORDERS</h3>
+                    <div class="value">{{ orders|length }}</div>
+                </div>
+                <div class="stat-card">
+                    <h3>TOTAL USERS</h3>
+                    <div class="value">{{ customers|length }}</div>
+                </div>
+                <div class="stat-card">
+                    <h3>TOTAL PRODUCTS</h3>
+                    <div class="value">{{ products|length }}</div>
+                </div>
+            </div>
+            
+            <div class="dashboard-card">
+                <div class="panel-header">
+                    <h3>RECENT ACTIVITY</h3>
+                </div>
+                <p style="color: var(--color-text-muted);">Welcome back. System is running smoothly. Use the sidebar to manage specific elements of the Bolddiva ecosystem.</p>
+            </div>
+        </section>
+
+        <!-- PRODUCTS PANEL -->
+        <section id="panel-products" class="admin-panel">
+            <div class="dashboard-card">
+                <div class="panel-header">
+                    <h3>MANAGE PRODUCTS</h3>
+                    <button class="btn btn-outline" id="add-product-btn" style="padding: 0.5rem 1rem; font-size: 0.8rem;">ADD PRODUCT</button>
+                </div>
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Product Name</th>
+                                <th>Category</th>
+                                <th>Stock / Price</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="products-tbody">
+                            {% for product in products %}
+                            <tr class="crud-row">
+                                <td style="display: flex; align-items: center; gap: 1rem;">
+                                    <img src="{{ product.image_url }}" alt="{{ product.name }}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;">
+                                    <span style="font-weight: 500;">{{ product.name }}</span>
+                                </td>
+                                <td>{{ product.category }}</td>
+                                <td>₹{{ product.price|floatformat:2 }}<br><span style="font-size:0.8rem; color:#10B981;">In Stock</span></td>
+                                <td>
+                                    <button class="action-btn edit-btn" title="Edit" onclick="editProduct(this)"><i data-lucide="edit" style="width:16px;"></i></button>
+                                    <button class="action-btn delete-btn" title="Delete" data-id="{{ product.id }}" data-collection="products" onclick="deleteRow(this)"><i data-lucide="trash-2" style="width:16px;"></i></button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- CATEGORIES PANEL -->
+        <section id="panel-categories" class="admin-panel">
+            <div class="dashboard-card">
+                <div class="panel-header">
+                    <h3>MANAGE CATEGORIES</h3>
+                    <button class="btn btn-outline" id="add-category-btn" style="padding: 0.5rem 1rem; font-size: 0.8rem;">ADD CATEGORY</button>
+                </div>
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Category Name</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="categories-tbody">
+                            <!-- Rendered dynamically by localStorage -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ORDERS PANEL -->
+        <section id="panel-orders" class="admin-panel">
+            <div class="dashboard-card">
+                <div class="panel-header">
+                    <h3>MANAGE ORDERS</h3>
+                </div>
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Customer</th>
+                                <th>Product</th>
+                                <th>Payment</th>
+                                <th>Total Price</th>
+                                <th>Status Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in orders %}
+                            <tr>
+                                <td style="font-family: monospace;">{{ order.id }}</td>
+                                <td style="font-weight:500;">{{ order.customer }}</td>
+                                <td style="color:var(--color-text-muted); font-size:0.9rem;">{{ order.product_name|default:"Various Products" }}</td>
+                                <td><span class="status-badge" style="background: var(--color-bg); font-size:0.8rem;">{{ order.payment_method|default:"COD" }}</span></td>
+                                <td style="font-family: var(--font-heading); font-weight: 600; color: var(--color-accent);">₹{{ order.total|floatformat:2 }}</td>
+                                <td>
+                                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                        <select class="form-control" style="padding: 0.5rem; font-size: 0.85rem; width: 110px; background:var(--color-bg);" data-order-id="{{ order.id }}" onchange="updateOrderStatus(this)">
+                                            <option value="Processing" {% if order.status == 'Processing' %}selected{% endif %}>Processing</option>
+                                            <option value="Shipped" {% if order.status == 'Shipped' %}selected{% endif %}>Shipped</option>
+                                            <option value="Completed" {% if order.status == 'Completed' %}selected{% endif %}>Completed</option>
+                                        </select>
+                                        <button class="action-btn" title="View Details / Bill" onclick="viewBill(this)" 
+                                            data-id="{{ order.id }}"
+                                            data-customer="{{ order.customer }}"
+                                            data-phone="{{ order.phone|default:'Not provided' }}"
+                                            data-email="{{ order.email|default:'Not provided' }}"
+                                            data-address="{{ order.address|default:'Not provided' }}"
+                                            data-product="{{ order.product_name|default:'Various Products' }}"
+                                            data-payment="{{ order.payment_method|default:'Cash on Delivery' }}"
+                                            data-subtotal="{{ order.subtotal|default:order.total }}"
+                                            data-tax="{{ order.tax|default:0 }}"
+                                            data-total="{{ order.total }}">
+                                            <i data-lucide="receipt" style="width:16px; color:var(--color-accent);"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- USERS PANEL -->
+        <section id="panel-users" class="admin-panel">
+            <div class="dashboard-card">
+                <div class="panel-header">
+                    <h3>USER DIRECTORY</h3>
+                </div>
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Joined</th>
+                                <th>Orders</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for customer in customers %}
+                            <tr class="crud-row" id="user-row-{{ customer.id }}">
+                                <td style="font-weight: 600;">{{ customer.name }}</td>
+                                <td style="color: var(--color-text-muted);">{{ customer.email }}</td>
+                                <td style="font-size:0.85rem; color:var(--color-text-muted);">{{ customer.date_joined }}</td>
+                                <td><span class="status-badge" style="background: var(--color-bg);">{{ customer.total_orders }}</span></td>
+                                <td>
+                                    <button class="action-btn delete-btn" title="Delete User" onclick="deleteUser('{{ customer.id }}')"><i data-lucide="user-x" style="width:16px;"></i></button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- REVIEWS PANEL -->
+        <section id="panel-reviews" class="admin-panel">
+            <div class="dashboard-card">
+                <div class="panel-header">
+                    <h3>CUSTOMER REVIEWS</h3>
+                </div>
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>User Name</th>
+                                <th>Product Name</th>
+                                <th>Review Text</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for review in reviews %}
+                            <tr class="crud-row">
+                                <td style="font-weight: 500; white-space: nowrap;">{{ review.user_name }}</td>
+                                <td style="color: var(--color-accent); font-size:0.9rem;">{{ review.product_name }}</td>
+                                <td style="color: var(--color-text-muted); font-size: 0.9rem;">"{{ review.text }}"</td>
+                                <td>
+                                    <button class="action-btn delete-btn" title="Delete Review" onclick="deleteRow(this)"><i data-lucide="trash-2" style="width:16px;"></i></button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- OFFERS PANEL -->
+        <section id="panel-offers" class="admin-panel">
+            <div class="dashboard-card">
+                <div class="panel-header">
+                    <h3>PROMO CODES</h3>
+                    <button class="btn btn-outline" style="padding: 0.5rem 1rem; font-size: 0.8rem;" onclick="alert('Demo: Coupon created!')">CREATE COUPON</button>
+                </div>
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Coupon Code</th>
+                                <th>Discount Amount</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for offer in offers %}
+                            <tr class="crud-row">
+                                <td style="font-family: monospace; font-weight:bold; font-size:1.1rem; letter-spacing:2px;">{{ offer.code }}</td>
+                                <td style="color: #10B981; font-weight: 600;">{{ offer.discount }}</td>
+                                <td>
+                                    <button class="action-btn delete-btn" title="Revoke promo" onclick="deleteRow(this)"><i data-lucide="trash-2" style="width:16px;"></i></button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+    </main>
+</div>
+
+<!-- Add Product Modal -->
+<div class="modal-overlay" id="product-modal">
+    <div class="modal-content">
+        <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid var(--color-border); padding-bottom: 1rem;">
+            <h3 style="margin: 0; font-family: var(--font-heading);">ADD NEW PRODUCT</h3>
+            <button id="close-modal-btn" style="background: none; border: none; color: var(--color-text-muted); cursor: pointer; padding: 5px; transition: color var(--transition-fast);" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='var(--color-text-muted)'"><i data-lucide="x"></i></button>
+        </div>
+        <form id="add-product-form" novalidate>
+            <div class="form-group">
+                <label style="display:block; margin-bottom: 5px; color: var(--color-text-muted); font-size: 0.9rem;">Product Name</label>
+                <input type="text" id="add-name" class="form-control" placeholder="e.g. Matte Lipstick" required>
+            </div>
+            <div class="form-group">
+                <label style="display:block; margin-bottom: 5px; color: var(--color-text-muted); font-size: 0.9rem;">Description</label>
+                <textarea id="add-desc" class="form-control" placeholder="A premium matte finish..." required></textarea>
+            </div>
+            <div class="form-group" style="display: flex; gap: 1rem;">
+                <div style="flex: 1;">
+                    <label style="display:block; margin-bottom: 5px; color: var(--color-text-muted); font-size: 0.9rem;">Price (₹)</label>
+                    <input type="number" id="add-price" class="form-control" placeholder="1499" required>
+                </div>
+                <div style="flex: 1;">
+                    <label style="display:block; margin-bottom: 5px; color: var(--color-text-muted); font-size: 0.9rem;">Category</label>
+                    <select id="add-cat" class="form-control" required>
+                        <option value="">Select Category</option>
+                        <option>Lips</option>
+                        <option>Eyes</option>
+                        <option>Face</option>
+                        <option>Skincare</option>
+                        <option>Nails</option>
+                        <option>Hair Care</option>
+                        <option>Tools & Brushes</option>
+                        <option>Fragrance</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label style="display:block; margin-bottom: 5px; color: var(--color-text-muted); font-size: 0.9rem;">Shade / Color Family (Optional)</label>
+                <select id="add-shade" class="form-control">
+                    <option value="">None</option>
+                    <option value="red">Red</option>
+                    <option value="pink">Pink</option>
+                    <option value="nude">Nude</option>
+                    <option value="black">Black / Brown</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label style="display:block; margin-bottom: 5px; color: var(--color-text-muted); font-size: 0.9rem;">Image URL (Link)</label>
+                <input type="url" id="add-img" class="form-control" placeholder="https://" required>
+            </div>
+            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">SAVE PRODUCT</button>
+        </form>
+    </div>
+</div>
+
+<!-- Add Category Modal -->
+<div class="modal-overlay" id="category-modal">
+    <div class="modal-content" style="max-width: 400px;">
+        <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid var(--color-border); padding-bottom: 1rem;">
+            <h3 style="margin: 0; font-family: var(--font-heading);">ADD CATEGORY</h3>
+            <button id="close-category-btn" style="background: none; border: none; color: var(--color-text-muted); cursor: pointer; padding: 5px; transition: color var(--transition-fast);" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='var(--color-text-muted)'"><i data-lucide="x"></i></button>
+        </div>
+        <form id="add-category-form" novalidate>
+            <div class="form-group">
+                <label style="display:block; margin-bottom: 5px; color: var(--color-text-muted); font-size: 0.9rem;">Category Name</label>
+                <input type="text" id="add-cat-name" class="form-control" placeholder="e.g. Bath & Body" required>
+            </div>
+            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">SAVE CATEGORY</button>
+        </form>
+    </div>
+</div>
+
+<!-- Custom Confirm Modal (User Fixed Version) -->
+<div id="confirmModal" class="modal">
+  <div class="modal-box">
+    <p style="margin-bottom:15px; font-weight:bold; font-size:1.1rem;">Are you sure you want to delete?</p>
+    <button id="confirmCancel">Cancel</button>
+    <button id="confirmDelete">Delete</button>
+  </div>
+</div>
+
+<!-- Order Bill Modal -->
+<div class="modal-overlay" id="bill-modal" style="display: none; z-index: 10000; align-items: center; justify-content: center;">
+    <div class="modal-content" style="max-width: 500px; width: 100%; border: 1px solid var(--color-border); box-shadow: 0 15px 30px rgba(0,0,0,0.5);">
+        <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--color-border); padding-bottom: 1rem;">
+            <h3 style="margin: 0; font-family: var(--font-heading);">ORDER INVOICE</h3>
+            <button id="close-bill-btn" style="background: none; border: none; color: var(--color-text-muted); cursor: pointer; padding: 5px; transition: color var(--transition-fast);" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='var(--color-text-muted)'"><i data-lucide="x"></i></button>
+        </div>
+        
+        <div style="font-size: 0.9rem; color: var(--color-text-muted); margin-bottom: 1.5rem;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                <span style="font-family: monospace;">Order ID: <strong id="bill-id" style="color:var(--color-text);"></strong></span>
+                <span>Date: <strong style="color:var(--color-text);">Today</strong></span>
+            </div>
+        </div>
+
+        <div style="background: var(--color-bg); padding: 1rem; border-radius: 6px; margin-bottom: 1.5rem;">
+            <h4 style="margin-bottom: 0.5rem; color: var(--color-text);">Customer Details</h4>
+            <p style="margin-bottom: 0.25rem;"><strong id="bill-customer" style="color:var(--color-text);"></strong></p>
+            <p style="margin-bottom: 0.25rem;"><i data-lucide="phone" style="width:14px; display:inline; margin-right:5px;"></i><span id="bill-phone"></span></p>
+            <p style="margin-bottom: 0.25rem;"><i data-lucide="mail" style="width:14px; display:inline; margin-right:5px;"></i><span id="bill-email"></span></p>
+            <p style="margin-top: 0.5rem;"><i data-lucide="map-pin" style="width:14px; display:inline; margin-right:5px;"></i><span id="bill-address"></span></p>
+        </div>
+
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 1.5rem; font-size: 0.9rem;">
+            <tr style="border-bottom: 1px solid var(--color-border);">
+                <th style="text-align: left; padding: 0.5rem 0; color: var(--color-text-muted);">Item</th>
+                <th style="text-align: right; padding: 0.5rem 0; color: var(--color-text-muted);">Amount</th>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--color-border);">
+                <td style="padding: 1rem 0;" id="bill-product"></td>
+                <td style="text-align: right; padding: 1rem 0;">₹<span id="bill-subtotal"></span></td>
+            </tr>
+            <tr>
+                <td style="padding: 0.5rem 0; color: var(--color-text-muted);">Tax / Shipping</td>
+                <td style="text-align: right; padding: 0.5rem 0;">₹<span id="bill-tax"></span></td>
+            </tr>
+            <tr style="border-top: 1px solid var(--color-border);">
+                <td style="padding: 1rem 0; font-weight: bold; font-size: 1.1rem; color: var(--color-accent);">Total</td>
+                <td style="text-align: right; padding: 1rem 0; font-weight: bold; font-size: 1.1rem; color: var(--color-accent);">₹<span id="bill-total"></span></td>
+            </tr>
+        </table>
+        
+        <div style="text-align: center; color: var(--color-text-muted); font-size: 0.85rem; background: var(--color-bg); padding: 0.75rem; border-radius: 4px;">
+            Payment Method: <strong id="bill-payment" style="color: var(--color-text);"></strong>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// ============================================
+// BOLDDIVA DASHBOARD - ALL JAVASCRIPT
+// Everything is global. No wrappers. No closures.
+// ============================================
+
+var _rowToDelete = null;
+
+// ---- Tab Navigation ----
+var navLinks = document.querySelectorAll('.nav-link');
+var panels = document.querySelectorAll('.admin-panel');
+for (var i = 0; i < navLinks.length; i++) {
+    navLinks[i].addEventListener('click', function(e) {
+        e.preventDefault();
+        for (var j = 0; j < navLinks.length; j++) navLinks[j].classList.remove('active');
+        for (var j = 0; j < panels.length; j++) panels[j].classList.remove('active');
+        this.classList.add('active');
+        var targetId = this.getAttribute('data-target');
+        var targetPanel = document.getElementById(targetId);
+        if (targetPanel) targetPanel.classList.add('active');
+    });
+}
+
+// ---- Product Modal ----
+var productModal = document.getElementById('product-modal');
+var addProductBtn = document.getElementById('add-product-btn');
+var closeModalBtn = document.getElementById('close-modal-btn');
+
+if (addProductBtn) {
+    addProductBtn.addEventListener('click', function() {
+        var f = document.getElementById('add-product-form');
+        if (f) f.reset();
+        var h = document.querySelector('#product-modal .modal-header h3');
+        if (h) h.innerText = 'ADD NEW PRODUCT';
+        if (productModal) { productModal.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+    });
+}
+if (closeModalBtn) {
+    closeModalBtn.addEventListener('click', function() {
+        if (productModal) { productModal.style.display = 'none'; document.body.style.overflow = ''; }
+    });
+}
+
+// ---- Bill Modal ----
+var billModal = document.getElementById('bill-modal');
+var closeBillBtn = document.getElementById('close-bill-btn');
+if (closeBillBtn) {
+    closeBillBtn.addEventListener('click', function() {
+        if (billModal) { billModal.style.display = 'none'; document.body.style.overflow = ''; }
+    });
+}
+
+// ---- Category Modal ----
+var catModal = document.getElementById('category-modal');
+var addCatBtn = document.getElementById('add-category-btn');
+var closeCatBtn = document.getElementById('close-category-btn');
+if (addCatBtn) {
+    addCatBtn.addEventListener('click', function() {
+        var f = document.getElementById('add-category-form');
+        if (f) f.reset();
+        if (catModal) { catModal.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+    });
+}
+if (closeCatBtn) {
+    closeCatBtn.addEventListener('click', function() {
+        if (catModal) { catModal.style.display = 'none'; document.body.style.overflow = ''; }
+    });
+}
+
+// ---- Confirm Delete Modal (FIXED) ----
+let confirmModal = document.getElementById('confirmModal');
+let confirmOkBtn = document.getElementById('confirmDelete');
+let confirmCancelBtn = document.getElementById('confirmCancel');
+
+// CANCEL
+if (confirmCancelBtn) {
+    confirmCancelBtn.addEventListener('click', () => {
+        confirmModal.style.display = 'none';
+        document.body.style.overflow = '';
+        _rowToDelete = null;
+    });
+}
+
+// DELETE
+if (confirmOkBtn) {
+    confirmOkBtn.addEventListener('click', function() {
+        const docId = this.getAttribute('data-id');
+        const collection = this.getAttribute('data-collection');
+        const isCategory = _rowToDelete && _rowToDelete.getAttribute('data-type') === 'category';
+        const catName = isCategory ? _rowToDelete.querySelector('td').innerText : null;
+        
+        const performDelete = () => {
+            if (_rowToDelete) {
+                if (isCategory && catName) {
+                    categories = categories.filter(c => c !== catName);
+                    localStorage.setItem("categories", JSON.stringify(categories));
+                }
+                
+                _rowToDelete.style.transition = 'opacity 0.3s, transform 0.3s';
+                _rowToDelete.style.transform = 'scale(0.95)';
+                _rowToDelete.style.opacity = '0';
+                
+                setTimeout(() => {
+                    _rowToDelete.remove();
+                }, 300);
+            }
+            confirmModal.style.display = 'none';
+            document.body.style.overflow = '';
+            _rowToDelete = null;
+        };
+
+        if (docId && collection) {
+            fetch('/api/delete_record/', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({id: docId, collection: collection})
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.status === 'success') {
+                    performDelete();
+                    showToast('Item deleted successfully!');
+                } else {
+                    showToast('Error deleting item: ' + data.message);
+                }
+            })
+            .catch(err => {
+                showToast('Error deleting item');
+            });
+        } else {
+            performDelete();
+        }
+    });
+}
+
+// ---- Escape Key ----
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        if (productModal && productModal.style.display === 'flex') { productModal.style.display = 'none'; document.body.style.overflow = ''; }
+        if (confirmModal && confirmModal.style.display === 'flex') { confirmModal.style.display = 'none'; document.body.style.overflow = ''; _rowToDelete = null; }
+        if (billModal && billModal.style.display === 'flex') { billModal.style.display = 'none'; document.body.style.overflow = ''; }
+        if (catModal && catModal.style.display === 'flex') { catModal.style.display = 'none'; document.body.style.overflow = ''; }
+    }
+});
+
+// ---- DELETE ROW (called from onclick) ----
+function deleteRow(btn) {
+    _rowToDelete = btn.closest('tr');
+    
+    console.log("clicked", _rowToDelete);
+
+    if (_rowToDelete) {
+        confirmOkBtn.setAttribute('data-id', btn.getAttribute('data-id') || '');
+        confirmOkBtn.setAttribute('data-collection', btn.getAttribute('data-collection') || '');
+        confirmModal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+// ---- EDIT PRODUCT (called from onclick) ----
+function editProduct(btn) {
+    var row = btn.closest('tr');
+    if (!row) return;
+    var nameEl = row.querySelector('span');
+    var tds = row.querySelectorAll('td');
+    
+    document.getElementById('add-name').value = nameEl ? nameEl.innerText : '';
+    var priceText = tds[2] ? tds[2].innerText : '0';
+    document.getElementById('add-price').value = parseFloat(priceText.replace('₹', '')) || '';
+    
+    var catSelect = document.getElementById('add-cat');
+    var catText = tds[1] ? tds[1].innerText.trim() : '';
+    for (var i = 0; i < catSelect.options.length; i++) {
+        if (catSelect.options[i].text === catText) catSelect.selectedIndex = i;
+    }
+    
+    var imgEl = row.querySelector('img');
+    document.getElementById('add-img').value = imgEl ? imgEl.src : '';
+    
+    var h = document.querySelector('#product-modal .modal-header h3');
+    if (h) h.innerText = 'EDIT PRODUCT';
+    if (productModal) { productModal.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+}
+
+// ---- UPDATE ORDER STATUS (called from onchange) ----
+function updateStatus(select) {
+    var row = select.closest('tr');
+    if (!row) return;
+    row.style.opacity = '0.5';
+    setTimeout(function() {
+        row.style.opacity = '1';
+        var s = select.value;
+        if (s === 'Completed') select.style.color = '#10B981';
+        else if (s === 'Shipped') select.style.color = '#3b82f6';
+        else select.style.color = 'orange';
+    }, 300);
+}
+
+// ---- VIEW BILL (called from onclick) ----
+function viewBill(btn) {
+    document.getElementById('bill-id').innerText = btn.getAttribute('data-id');
+    document.getElementById('bill-customer').innerText = btn.getAttribute('data-customer');
+    document.getElementById('bill-phone').innerText = btn.getAttribute('data-phone');
+    document.getElementById('bill-email').innerText = btn.getAttribute('data-email');
+    document.getElementById('bill-address').innerText = btn.getAttribute('data-address');
+    document.getElementById('bill-product').innerText = btn.getAttribute('data-product');
+    document.getElementById('bill-payment').innerText = btn.getAttribute('data-payment');
+    document.getElementById('bill-subtotal').innerText = parseFloat(btn.getAttribute('data-subtotal')).toFixed(2);
+    document.getElementById('bill-tax').innerText = parseFloat(btn.getAttribute('data-tax')).toFixed(2);
+    document.getElementById('bill-total').innerText = parseFloat(btn.getAttribute('data-total')).toFixed(2);
+    if (billModal) { billModal.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+    lucide.createIcons();
+}
+
+// ---- TOAST NOTIFICATION ----
+function showToast(message) {
+    var toast = document.getElementById('success-toast');
+    if (!toast) return;
+    toast.innerHTML = '<i data-lucide="check-circle" style="width:18px;"></i> ' + message;
+    toast.classList.add('show');
+    lucide.createIcons();
+    setTimeout(function() { toast.classList.remove('show'); }, 3000);
+}
+
+// ---- TOGGLE CATEGORY ACTIVE/INACTIVE ----
+function toggleCategory(checkbox) {
+    var row = checkbox.closest('tr');
+    if (!row) return;
+    var catName = row.querySelector('td').innerText;
+    if (checkbox.checked) {
+        row.style.opacity = '1';
+        showToast(catName + ' is now Active');
+    } else {
+        row.style.opacity = '0.5';
+        showToast(catName + ' is now Inactive');
+    }
+}
+
+// ---- ADD PRODUCT FORM SUBMIT ----
+var addProductForm = document.getElementById('add-product-form');
+if (addProductForm) {
+    addProductForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        if (!addProductForm.checkValidity()) return;
+        
+        var name = document.getElementById('add-name').value;
+        var desc = document.getElementById('add-desc').value;
+        var price = parseFloat(document.getElementById('add-price').value).toFixed(2);
+        var cat = document.getElementById('add-cat').value;
+        var shade = document.getElementById('add-shade') ? document.getElementById('add-shade').value : "";
+        var img = document.getElementById('add-img').value;
+        
+        fetch('/api/add_product/', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({name: name, description: desc, price: price, category: cat, shade: shade, image_url: img})
+        })
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+            var tbody = document.getElementById('products-tbody');
+            var tr = document.createElement('tr');
+            tr.className = 'crud-row';
+            tr.style.animation = 'fadeIn 0.5s';
+            tr.innerHTML = '<td style="display:flex;align-items:center;gap:1rem;"><img src="' + img + '" style="width:40px;height:40px;object-fit:cover;border-radius:4px;"><span style="font-weight:500;">' + name + '</span></td><td>' + cat + '</td><td>₹' + price + '<br><span style="font-size:0.8rem;color:#10B981;">In Stock</span></td><td><button class="action-btn edit-btn" title="Edit" onclick="editProduct(this)"><i data-lucide="edit" style="width:16px;"></i></button> <button class="action-btn delete-btn" title="Delete" data-id="' + data.id + '" data-collection="products" onclick="deleteRow(this)"><i data-lucide="trash-2" style="width:16px;"></i></button></td>';
+            tbody.prepend(tr);
+            lucide.createIcons();
+            if (productModal) { productModal.style.display = 'none'; document.body.style.overflow = ''; }
+            addProductForm.reset();
+            showToast('Product saved to database!');
+        })
+        .catch(function(err) { showToast('Error saving product'); });
+    });
+}
+
+// ---- ADD CATEGORY FORM SUBMIT ----
+var addCatForm = document.getElementById('add-category-form');
+if (addCatForm) {
+    addCatForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        if (!addCatForm.checkValidity()) return;
+        
+        var name = document.getElementById('add-cat-name').value;
+        if (!categories.includes(name)) {
+            categories.unshift(name);
+            localStorage.setItem("categories", JSON.stringify(categories));
+            renderCategories();
+        }
+        
+        if (catModal) { catModal.style.display = 'none'; document.body.style.overflow = ''; }
+        addCatForm.reset();
+        showToast('Category created successfully!');
+    });
+}
+
+// ---- CATEGORIES LOCALSTORAGE ----
+let categories = JSON.parse(localStorage.getItem("categories")) || [
+  "Lips", "Eyes", "Face", "Skincare", "Nails", "Hair Care", "Tools & Brushes", "Fragrance"
+];
+
+function renderCategories() {
+  const table = document.getElementById("categories-tbody");
+  if (!table) return;
+  table.innerHTML = "";
+  categories.forEach(cat => {
+    table.innerHTML += `
+      <tr class="crud-row" data-type="category">
+          <td style="font-weight: 500;">${cat}</td>
+          <td><label class="toggle-switch"><input type="checkbox" checked onchange="toggleCategory(this)"><span class="toggle-slider"></span></label></td>
+          <td><button class="action-btn delete-btn" onclick="deleteRow(this)"><i data-lucide="trash-2" style="width:16px;"></i></button></td>
+      </tr>
+    `;
+  });
+  
+  // Update the select dropdown in the add product modal
+  const select = document.getElementById('add-cat');
+  if (select) {
+      select.innerHTML = '<option value="">Select Category</option>';
+      categories.forEach(cat => { select.innerHTML += `<option>${cat}</option>`; });
+  }
+  
+  if (window.lucide) { lucide.createIcons(); }
+}
+renderCategories();
+
+// ---- UPDATE ORDER STATUS ----
+function updateOrderStatus(selectEl) {
+    var orderId = selectEl.getAttribute('data-order-id');
+    var newStatus = selectEl.value;
+    
+    fetch('/api/update_order_status/', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({order_id: orderId, status: newStatus})
+    })
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+        if (data.status === 'success') {
+            showToast('Order ' + orderId + ' → ' + newStatus);
+        } else {
+            showToast('Failed to update status');
+        }
+    })
+    .catch(function() { showToast('Error updating status'); });
+}
+
+// ---- DELETE USER ----
+function deleteUser(userId) {
+    if (!confirm('Are you sure you want to delete this user? This cannot be undone.')) return;
+    
+    fetch('/api/delete_user/', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ user_id: userId })
+    })
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+        if (data.status === 'success') {
+            var row = document.getElementById('user-row-' + userId);
+            if (row) {
+                row.style.animation = 'fadeOut 0.3s ease forwards';
+                setTimeout(function() { row.remove(); }, 300);
+            }
+            showToast('User deleted successfully');
+        } else {
+            showToast(data.message || 'Failed to delete user');
+        }
+    })
+    .catch(function() { showToast('Error deleting user'); });
+}
+
+console.log('[Dashboard] All handlers ready.');
+</script>
+
+<!-- Toast Notification Element -->
+<div class="toast-notification" id="success-toast"></div>
+
+{% endblock %}

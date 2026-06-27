@@ -1,0 +1,245 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    /* Hero Section */
+    .hero {
+        height: 65vh;
+        background: linear-gradient(rgba(10,10,10,0.5), rgba(10,10,10,0.9)), url('https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=2000&q=80') center/cover no-repeat;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 2rem;
+    }
+
+    .hero-content {
+        max-width: 800px;
+    }
+
+    .hero-title {
+        font-size: 3rem;
+        margin-bottom: 0.8rem;
+        line-height: 1.2;
+        letter-spacing: -1px;
+    }
+
+    .hero-title span {
+        color: var(--color-accent);
+    }
+
+    .hero-subtitle {
+        font-size: 1.1rem;
+        color: var(--color-text-muted);
+        margin-bottom: 2rem;
+    }
+
+    /* Categories Box Style */
+    .category-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.5rem;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .category-card {
+        height: 260px;
+        position: relative;
+        background-color: var(--color-bg-secondary);
+        display: flex;
+        align-items: flex-end;
+        padding: 1.5rem;
+        overflow: hidden;
+        border-radius: 8px;
+    }
+
+    .category-card img {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        opacity: 0.6;
+        transition: transform var(--transition-smooth);
+    }
+
+    .category-card:hover img {
+        transform: scale(1.05);
+        opacity: 0.8;
+    }
+
+    .category-card h3 {
+        position: relative;
+        z-index: 2;
+        font-size: 1.5rem;
+    }
+
+    /* Horizontal Strip */
+    .bestseller-strip {
+        display: flex;
+        overflow-x: auto;
+        gap: 1.5rem;
+        padding-bottom: 1.5rem;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+        scroll-snap-type: x mandatory;
+    }
+    .bestseller-strip::-webkit-scrollbar { display: none; }
+    .bestseller-strip .product-card {
+        min-width: 260px;
+        flex: 0 0 auto;
+        scroll-snap-align: start;
+    }
+
+    /* Reviews Slider */
+    .review-card {
+        background: var(--color-bg);
+        border: 1px solid var(--color-border);
+        border-radius: 8px;
+        padding: 1.5rem;
+        min-width: 300px;
+        scroll-snap-align: center;
+        flex: 0 0 auto;
+    }
+    .reviewer-profile {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+    .reviewer-img {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+    .stars {
+        color: var(--color-accent);
+        margin-bottom: 1rem;
+    }
+
+    /* Final CTA */
+    .final-cta {
+        padding: 5rem 2rem;
+        text-align: center;
+        background: linear-gradient(rgba(10,10,10,0.8), rgba(10,10,10,0.8)), url('https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=2000&q=80') center/cover fixed;
+    }
+    .final-cta-text {
+        font-family: var(--font-heading);
+        font-size: 3rem;
+        font-weight: 900;
+        text-transform: uppercase;
+        margin-bottom: 1.5rem;
+        letter-spacing: -1px;
+    }
+
+    /* Homepage Responsive */
+    @media (max-width: 768px) {
+        .hero { height: 55vh; }
+        .hero-title { font-size: 2.2rem; }
+        .hero-subtitle { font-size: 1rem; }
+        .category-grid { grid-template-columns: 1fr; gap: 1rem; }
+        .category-card { height: 200px; }
+        .final-cta { padding: 3rem 1.5rem; }
+        .final-cta-text { font-size: 2rem; }
+    }
+    
+    @media (max-width: 480px) {
+        .hero { height: 50vh; padding: 1.5rem; }
+        .hero-title { font-size: 1.8rem; }
+        .category-card h3 { font-size: 1.2rem; }
+        .final-cta-text { font-size: 1.6rem; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero">
+    <div class="hero-content">
+        <h1 class="hero-title">OWN YOUR <span>BOLD</span></h1>
+        <p class="hero-subtitle">Make your statement with premium, high-impact cosmetics designed for the fearless.</p>
+        <a href="{% url 'shop' %}" class="btn btn-primary">SHOP THE COLLECTION</a>
+    </div>
+</section>
+
+<!-- Shop by Category -->
+<section class="section-padding">
+    <h2 class="section-title">SHOP BY CATEGORY</h2>
+    <div class="category-grid">
+        <a href="{% url 'shop' %}?category=Lips" class="category-card">
+            <img src="https://images.unsplash.com/photo-1586495777744-4413f21062fa?auto=format&fit=crop&w=800&q=80" alt="Lips">
+            <h3>LIPS</h3>
+        </a>
+        <a href="{% url 'shop' %}?category=Eyes" class="category-card">
+            <img src="https://images.unsplash.com/photo-1629198688000-71f23e745b6e?auto=format&fit=crop&w=800&q=80" alt="Eyes">
+            <h3>EYES</h3>
+        </a>
+        <a href="{% url 'shop' %}?category=Face" class="category-card">
+            <img src="https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=800&q=80" alt="Face">
+            <h3>FACE</h3>
+        </a>
+    </div>
+</section>
+
+<!-- Bestsellers -->
+<section class="section-padding" style="background-color: var(--color-bg-secondary);">
+    <h2 class="section-title">CURRENT FAVORITES</h2>
+    <div class="bestseller-strip">
+        {% for product in bestsellers %}
+        <a href="{% url 'product_detail' product.id %}" class="product-card">
+            <div class="image-wrapper">
+                <img src="{{ product.image_url }}" alt="{{ product.name }}" class="product-image primary-img" loading="lazy">
+                <img src="{{ product.image_url_2|default:product.image_url }}" alt="{{ product.name }} Alt" class="product-image secondary-img" loading="lazy">
+            </div>
+            <div class="product-tags">
+                <span class="tag hot">HOT</span>
+            </div>
+            <div class="product-info">
+                <p class="product-brand">BOLDDIVA</p>
+                <h3 class="product-name">{{ product.name }}</h3>
+                <p class="product-price">₹{{ product.price }}</p>
+                <button class="btn btn-outline add-to-cart-btn" style="width: 100%; border-color: var(--color-border);" 
+                        data-id="{{ product.id }}" data-name="{{ product.name }}" data-price="{{ product.price }}" data-image="{{ product.image_url }}">
+                    QUICK ADD
+                </button>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+</section>
+
+<!-- Single Highlighted Review -->
+<section class="section-padding" id="reviews-section" style="background-color: var(--color-bg); display: flex; flex-direction: column; align-items: center; justify-content: center;">
+    <h2 class="section-title">REAL DIVAS. REAL RESULTS.</h2>
+    <div class="review-card" style="max-width: 800px; width: 100%; border: 1px solid var(--color-border); background-color: var(--color-bg-secondary); padding: 2rem; text-align: center; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.3);">
+        <div class="stars" style="font-size: 1.5rem; justify-content: center; margin-bottom: 1.5rem;">★★★★★</div>
+        <p style="font-size: 1.2rem; font-style: italic; line-height: 1.6; margin-bottom: 1.5rem; color: var(--color-text);">
+            "The matte lipstick literally stayed on through a 12-hour wedding. I am obsessed. The pigmentation is insane and it doesn't dry out my lips at all."
+        </p>
+        <div class="reviewer-profile" style="flex-direction: column; align-items: center; justify-content: center; text-align: center;">
+            <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=200&q=80" class="reviewer-img" alt="Reviewer" style="width: 60px; height: 60px; margin-bottom: 0.8rem;">
+            <div>
+                <h4 style="font-size: 1.2rem; margin-bottom: 0.2rem;">Priya Sharma</h4>
+                <span style="font-size:0.9rem; color:var(--color-accent); font-weight: 600;">Verified Buyer</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Promo Banner -->
+<section class="promo" style="padding: 4rem 2rem; text-align: center; background-color: var(--color-accent); color: white;">
+    <h2 style="font-size: 2.5rem; margin-bottom: 0.8rem; letter-spacing: -1px; font-family:var(--font-heading);">BOLD MOVES ONLY.</h2>
+    <p style="font-size: 1.1rem; font-weight: 500; margin-bottom: 1.5rem;">Unlock your signature look with our pro-approved kits.</p>
+    <a href="{% url 'shop' %}" class="btn" style="background-color: #fff; color: var(--color-accent);">SHOP KITS</a>
+</section>
+
+<!-- Final CTA Section -->
+<section class="final-cta">
+    <h1 class="final-cta-text">Confidence starts here.</h1>
+    <a href="{% url 'shop' %}" class="btn btn-primary" style="font-size: 1rem; padding: 1rem 2.5rem;">OWN YOUR LOOK</a>
+</section>
+{% endblock %}

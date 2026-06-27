@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Bolddiva - Own Your Bold{% endblock %}</title>
+    
+    <!-- Favicon -->
+    {% load static %}
+    <link rel="icon" type="image/png" href="{% static 'images/logo.png' %}">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="dark-theme">
+    
+    <!-- Page Loader -->
+    <div id="page-loader">
+        <div class="loader-inner">
+            <div class="loader-ring"></div>
+            <div class="loader-ring"></div>
+            <div class="loader-ring"></div>
+            <span class="loader-text">BOLDDIVA</span>
+        </div>
+    </div>
+    <style>
+        #page-loader {
+            position: fixed; inset: 0; z-index: 99999;
+            background: #0A0A0A;
+            display: flex; align-items: center; justify-content: center;
+            transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.5s;
+        }
+        #page-loader.loaded {
+            opacity: 0; visibility: hidden; pointer-events: none;
+        }
+        .loader-inner {
+            position: relative;
+            width: 120px; height: 120px;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .loader-ring {
+            position: absolute; inset: 0;
+            border: 2px solid transparent;
+            border-radius: 50%;
+        }
+        .loader-ring:nth-child(1) {
+            border-top-color: #FF0055;
+            animation: loaderSpin 1s cubic-bezier(0.6, 0.2, 0, 0.8) infinite;
+        }
+        .loader-ring:nth-child(2) {
+            inset: 10px;
+            border-right-color: #ff6b9d;
+            animation: loaderSpin 1.2s cubic-bezier(0.6, 0.2, 0, 0.8) infinite reverse;
+        }
+        .loader-ring:nth-child(3) {
+            inset: 20px;
+            border-bottom-color: #FF0055;
+            animation: loaderSpin 1.5s cubic-bezier(0.6, 0.2, 0, 0.8) infinite;
+        }
+        .loader-text {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 900; font-size: 0.7rem;
+            letter-spacing: 3px; color: #fff;
+            animation: loaderPulse 1.2s ease-in-out infinite;
+        }
+        @keyframes loaderSpin { to { transform: rotate(360deg); } }
+        @keyframes loaderPulse { 0%,100% { opacity: 0.4; } 50% { opacity: 1; } }
+    </style>
+
+    <!-- Custom Cursor -->
+    <div id="cursor-dot"></div>
+    <div id="cursor-ring"></div>
+    <div id="cursor-trail"></div>
+    <style>
+        *, *::before, *::after { cursor: none !important; }
+
+        #cursor-dot {
+            position: fixed; z-index: 999999; pointer-events: none;
+            width: 32px; height: 32px; margin: -16px 0 0 -16px; top: 0; left: 0;
+            transform: translate3d(-100px, -100px, 0);
+            transition: opacity 0.2s;
+            will-change: transform;
+        }
+        #cursor-dot svg {
+            width: 100%; height: 100%;
+            filter: drop-shadow(0 0 6px var(--cursor-glow, rgba(255,0,85,0.7)));
+            transition: filter 0.5s ease;
+        }
+        #cursor-dot.switching svg {
+            animation: cursorSwap 0.4s cubic-bezier(0.68,-0.55,0.27,1.55);
+        }
+        @keyframes cursorSwap {
+            0% { transform: scale(1) rotate(0deg); opacity: 1; }
+            40% { transform: scale(0) rotate(180deg); opacity: 0; }
+            60% { transform: scale(0) rotate(180deg); opacity: 0; }
+            100% { transform: scale(1) rotate(360deg); opacity: 1; }
+        }
+
+        #cursor-ring {
+            position: fixed; z-index: 999998; pointer-events: none;
+            width: 46px; height: 46px; margin: -23px 0 0 -23px; top: 0; left: 0;
+            border: 2px solid var(--cursor-ring, rgba(255,0,85,0.35));
+            border-radius: 50%;
+            transform: translate3d(-100px, -100px, 0);
+            transition: width 0.3s, height 0.3s, margin 0.3s, border-color 0.5s, background 0.3s;
+            will-change: transform, width, height, margin;
+        }
+        #cursor-ring.hover {
+            width: 64px; height: 64px; margin: -32px 0 0 -32px;
+            border-color: var(--cursor-ring-hover, rgba(255,0,85,0.7));
+            background: rgba(255,0,85,0.05);
+        }
+
+        #cursor-trail {
+            position: fixed; z-index: 999997; pointer-events: none;
+            width: 10px; height: 10px; margin: -5px 0 0 -5px; top: 0; left: 0;
+            background: radial-gradient(circle, var(--cursor-trail, rgba(255,0,85,0.5)) 0%, transparent 70%);
+            border-radius: 50%;
+            transform: translate3d(-100px, -100px, 0);
+            opacity: 0;
+            will-change: transform;
+        }
+
+        .cursor-sparkle {
+            position: fixed; z-index: 999996; pointer-events: none;
+            border-radius: 50%;
+            animation: sparkleOut 0.5s ease-out forwards;
+            will-change: transform;
+        }
+        @keyframes sparkleOut {
+            0% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(0); opacity: 0; }
+        }
+
+        @media (max-width: 768px) {
+            #cursor-dot, #cursor-ring, #cursor-trail { display: none !important; }
+            *, *::before, *::after { cursor: auto !important; }
+        }
+    </style>
+
+    <!-- Top Announcement Bar -->
+    <div class="announcement-bar">
+        <span>FLAT 20% OFF - LIMITED TIME ONLY! USE CODE: BOLD20</span>
+    </div>
+
+    <!-- Search Overlay -->
+    <div class="search-overlay" id="search-overlay">
+        <button class="close-search" id="close-search"><i data-lucide="x"></i></button>
+        <form action="{% url 'shop' %}" method="GET" class="search-form">
+            <input type="text" name="q" placeholder="Type and press enter..." required>
+        </form>
+    </div>
+
+    <!-- Shade Finder Overlay -->
+    <div class="search-overlay" id="shade-finder-overlay" style="background: rgba(10,10,10,0.98); align-items:center;">
+        <button class="close-search" id="close-shade-finder"><i data-lucide="x"></i></button>
+        <div class="shade-finder-content" style="text-align: center; max-width: 600px; padding: 2rem;">
+            <i data-lucide="sparkles" style="width:50px; height:50px; color:var(--color-accent); margin-bottom:1rem;"></i>
+            <h2 style="font-size: 3rem; margin-bottom: 0.5rem; font-family: var(--font-heading);">FIND YOUR MATCH</h2>
+            <p style="color: var(--color-text-muted); margin-bottom: 2rem; font-size: 1.2rem;">Tell us what you're looking for, and we'll do the magic.</p>
+            
+            <div id="shade-step-1">
+                <h3 style="margin-bottom: 1.5rem;">What is your skin undertone?</h3>
+                <div style="display: flex; gap: 1rem; justify-content: center; margin-bottom: 2rem;">
+                    <button class="btn btn-outline sf-btn" onclick="nextShadeStep(2)">Warm (Golden/Yellow)</button>
+                    <button class="btn btn-outline sf-btn" onclick="nextShadeStep(2)">Cool (Pink/Blue)</button>
+                    <button class="btn btn-outline sf-btn" onclick="nextShadeStep(2)">Neutral</button>
+                </div>
+            </div>
+
+            <div id="shade-step-2" style="display:none;">
+                <h3 style="margin-bottom: 1.5rem;">What's the occasion?</h3>
+                <div style="display: flex; gap: 1rem; justify-content: center; margin-bottom: 2rem;">
+                    <button class="btn btn-outline sf-btn" onclick="nextShadeStep(3)">Everyday Office</button>
+                    <button class="btn btn-outline sf-btn" onclick="nextShadeStep(3)">Glam Party</button>
+                    <button class="btn btn-outline sf-btn" onclick="nextShadeStep(3)">Date Night</button>
+                </div>
+            </div>
+
+            <div id="shade-step-3" style="display:none;">
+                <h3 style="margin-bottom: 1rem; color: var(--color-accent);">Your Perfect Match!</h3>
+                <p>Based on your answers, we recommend:</p>
+                <div style="margin: 2rem 0; background: #fff; border-radius:8px; padding:1rem; display:inline-block; color:#000;">
+                    <img src="https://images.unsplash.com/photo-1586495777744-4413f21062fa?auto=format&fit=crop&w=200&q=80" style="width:100px; border-radius:4px;">
+                    <h4 style="margin-top:0.5rem;">Smudge Me Not (Plum)</h4>
+                </div>
+                <br>
+                <a href="{% url 'shop' %}?category=Lips" class="btn btn-primary" onclick="closeShadeFinder()">SHOP RECOMMENDATION</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <header class="header">
+        <div class="nav-container">
+            <a href="{% url 'home' %}" class="logo">
+                <img src="{% static 'images/logo.png' %}" alt="BOLD DIVA" class="logo-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';">
+                <span style="display:none;">BOLDDIVA</span>
+            </a>
+            <nav class="main-nav">
+                {% for cat in dynamic_categories|slice:":3" %}
+                <a href="{% url 'shop' %}?category={{ cat|urlencode }}">{{ cat|upper }}</a>
+                {% endfor %}
+                {% if dynamic_categories|length > 3 %}
+                <div class="nav-dropdown">
+                    <a href="#" class="dropdown-btn">MORE <i data-lucide="chevron-down" style="width:14px; display:inline-block;"></i></a>
+                    <div class="dropdown-content">
+                        {% for cat in dynamic_categories|slice:"3:" %}
+                        <a href="{% url 'shop' %}?category={{ cat|urlencode }}">{{ cat|upper }}</a>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+                <a href="#" id="open-shade-finder" style="color:var(--color-accent); font-weight: bold;"><i data-lucide="sparkles" style="width:16px; display:inline; vertical-align:middle;"></i> SHADE FINDER</a>
+            </nav>
+            <div class="nav-icons">
+                <a href="#" class="icon-btn search-trigger"><i data-lucide="search"></i></a>
+                {% if user.is_authenticated %}
+                    {% if user.is_superuser %}
+                    <a href="{% url 'dashboard' %}" class="icon-btn" title="Dashboard" style="color:var(--color-accent);"><i data-lucide="layout-dashboard"></i></a>
+                    {% else %}
+                    <a href="{% url 'my_account' %}" class="icon-btn" title="My Account"><i data-lucide="user"></i></a>
+                    {% endif %}
+                    <a href="{% url 'logout' %}" class="icon-btn" title="Logout" style="color:var(--color-text-muted);"><i data-lucide="log-out"></i></a>
+                {% else %}
+                <a href="{% url 'login' %}" class="icon-btn" title="Login / Signup"><i data-lucide="user"></i></a>
+                {% endif %}
+                <a href="{% url 'cart' %}" class="icon-btn cart-btn">
+                    <i data-lucide="shopping-bag"></i>
+                    <span class="cart-count">0</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-brand">
+                <h2>BOLDDIVA</h2>
+                <p>Unapologetically bold. Own your look.</p>
+                <div class="social-links">
+                    <a href="#">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-instagram"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>
+                    </a>
+                    <a href="#">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-twitter"><path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"/></svg>
+                    </a>
+                    <a href="#">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-facebook"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+                    </a>
+                </div>
+            </div>
+            <div class="footer-links">
+                <div class="link-column">
+                    <h3>SHOP</h3>
+                    {% for cat in dynamic_categories|slice:":3" %}
+                    <a href="{% url 'shop' %}?category={{ cat|urlencode }}">{{ cat }}</a>
+                    {% endfor %}
+                    <a href="{% url 'shop' %}">All Products</a>
+                </div>
+                <div class="link-column">
+                    <h3>EXPLORE</h3>
+                    <a href="{% url 'blogs' %}">Beauty Blog</a>
+                    <a href="{% url 'shop' %}">Latest Arrivals</a>
+                </div>
+                <div class="link-column">
+                    <h3>SUPPORT</h3>
+                    <a href="mailto:support@bolddiva.com">Contact Us</a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 BOLDDIVA. All rights reserved.</p>
+        </div>
+    </footer>
+
+    {% load static %}
+    <script src="{% static 'js/main.js' %}"></script>
+    <script>
+        lucide.createIcons();
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                var loader = document.getElementById('page-loader');
+                if (loader) loader.classList.add('loaded');
+            }, 400);
+        });
+    </script>
+    <script>
+    (function() {
+        var dot = document.getElementById('cursor-dot');
+        var ring = document.getElementById('cursor-ring');
+        var trail = document.getElementById('cursor-trail');
+        if (!dot || !ring || window.innerWidth <= 768) return;
+
+        // Product icon collection with unique bright colors
+        var products = [
+            { name:'lipstick', glow:'rgba(255,0,85,0.7)', ring:'rgba(255,0,85,0.4)', colors:['#FF0055','#ff3377'],
+              svg:'<svg viewBox="0 0 32 32"><rect x="11" y="1" width="10" height="13" rx="2.5" fill="#FF0055"/><rect x="11" y="1" width="10" height="5" rx="2.5" fill="#FF4488"/><rect x="10" y="14" width="12" height="15" rx="2" fill="#1a1a1a" stroke="#555" stroke-width="0.6"/><rect x="10" y="14" width="12" height="3" rx="1" fill="#2a2a2a"/></svg>' },
+            { name:'mascara', glow:'rgba(168,85,247,0.7)', ring:'rgba(168,85,247,0.4)', colors:['#A855F7','#C084FC'],
+              svg:'<svg viewBox="0 0 32 32"><rect x="13" y="1" width="6" height="20" rx="3" fill="#1a1a1a" stroke="#A855F7" stroke-width="1"/><rect x="14" y="3" width="4" height="6" rx="2" fill="#A855F7"/><ellipse cx="16" cy="26" rx="5" ry="4" fill="#1a1a1a" stroke="#A855F7" stroke-width="0.8"/><circle cx="16" cy="26" r="2" fill="#C084FC" opacity="0.6"/></svg>' },
+            { name:'nailpolish', glow:'rgba(236,72,153,0.7)', ring:'rgba(236,72,153,0.4)', colors:['#EC4899','#F9A8D4'],
+              svg:'<svg viewBox="0 0 32 32"><rect x="15" y="1" width="2" height="6" rx="1" fill="#888"/><rect x="10" y="7" width="12" height="4" rx="2" fill="#1a1a1a" stroke="#EC4899" stroke-width="0.6"/><path d="M10 11 Q10 28 16 30 Q22 28 22 11 Z" fill="#EC4899"/><path d="M12 13 Q12 22 16 24 Q20 22 20 13 Z" fill="#F472B6" opacity="0.5"/></svg>' },
+            { name:'eyeliner', glow:'rgba(56,189,248,0.7)', ring:'rgba(56,189,248,0.4)', colors:['#38BDF8','#7DD3FC'],
+              svg:'<svg viewBox="0 0 32 32"><polygon points="16,1 13,8 19,8" fill="#38BDF8"/><rect x="13" y="8" width="6" height="18" rx="1" fill="#1a1a1a" stroke="#38BDF8" stroke-width="0.7"/><rect x="12" y="26" width="8" height="4" rx="2" fill="#1e1e1e" stroke="#38BDF8" stroke-width="0.5"/><line x1="16" y1="3" x2="16" y2="7" stroke="#7DD3FC" stroke-width="1" opacity="0.7"/></svg>' },
+            { name:'perfume', glow:'rgba(251,191,36,0.7)', ring:'rgba(251,191,36,0.4)', colors:['#FBBF24','#FDE68A'],
+              svg:'<svg viewBox="0 0 32 32"><rect x="14" y="1" width="4" height="3" rx="1" fill="#FBBF24"/><rect x="15" y="4" width="2" height="3" fill="#888"/><rect x="10" y="7" width="12" height="4" rx="2" fill="#FBBF24"/><rect x="9" y="11" width="14" height="18" rx="3" fill="#1a1a1a" stroke="#FBBF24" stroke-width="0.8"/><ellipse cx="16" cy="20" rx="4" ry="5" fill="#FBBF24" opacity="0.2"/><circle cx="16" cy="20" r="2" fill="#FDE68A" opacity="0.4"/></svg>' }
+        ];
+
+        var idx = 0;
+        function setProduct(i) {
+            var p = products[i];
+            dot.innerHTML = p.svg;
+            document.documentElement.style.setProperty('--cursor-glow', p.glow);
+            document.documentElement.style.setProperty('--cursor-ring', p.ring);
+            document.documentElement.style.setProperty('--cursor-ring-hover', p.glow);
+            document.documentElement.style.setProperty('--cursor-trail', p.glow.replace('0.7','0.5'));
+        }
+        setProduct(0);
+
+        // Cycle products every 3 seconds with spin animation
+        setInterval(function() {
+            dot.classList.add('switching');
+            setTimeout(function() {
+                idx = (idx + 1) % products.length;
+                setProduct(idx);
+            }, 200);
+            setTimeout(function() { dot.classList.remove('switching'); }, 450);
+        }, 3000);
+
+        var mx = -100, my = -100, dx = -100, dy = -100, rx = -100, ry = -100, tx = -100, ty = -100;
+        var speed = 0.2, ringSpeed = 0.12, trailSpeed = 0.06;
+
+        document.addEventListener('mousemove', function(e) {
+            mx = e.clientX; my = e.clientY;
+            trail.style.opacity = '1';
+        });
+        document.addEventListener('mouseleave', function() {
+            dot.style.opacity = '0'; ring.style.opacity = '0'; trail.style.opacity = '0';
+        });
+        document.addEventListener('mouseenter', function() {
+            dot.style.opacity = '1'; ring.style.opacity = '1';
+        });
+
+        var dotScale = 1, dotAngle = 0;
+
+        // Hover expand on interactive elements
+        document.addEventListener('mouseover', function(e) {
+            if (e.target.closest('a, button, input, select, textarea, [onclick], .btn, .product-card, .category-card')) {
+                ring.classList.add('hover');
+                dotScale = 0.8; dotAngle = -12;
+            }
+        });
+        document.addEventListener('mouseout', function(e) {
+            if (e.target.closest('a, button, input, select, textarea, [onclick], .btn, .product-card, .category-card')) {
+                ring.classList.remove('hover');
+                dotScale = 1; dotAngle = 0;
+            }
+        });
+
+        // Click sparkle burst - uses current product colors
+        document.addEventListener('mousedown', function() {
+            dotScale = 0.65;
+            var p = products[idx];
+            for (var i = 0; i < 8; i++) {
+                var sp = document.createElement('div');
+                sp.className = 'cursor-sparkle';
+                var angle = (i / 8) * Math.PI * 2 + (Math.random() * 0.4);
+                var dist = 18 + Math.random() * 14;
+                var sx = mx + Math.cos(angle) * dist;
+                var sy = my + Math.sin(angle) * dist;
+                sp.style.transform = 'translate3d(' + sx + 'px, ' + sy + 'px, 0)';
+                sp.style.background = p.colors[i % 2];
+                var size = (3 + Math.random() * 5);
+                sp.style.width = size + 'px'; sp.style.height = size + 'px';
+                sp.style.marginLeft = -(size/2) + 'px'; sp.style.marginTop = -(size/2) + 'px';
+                sp.style.top = '0'; sp.style.left = '0';
+                sp.style.boxShadow = '0 0 6px ' + p.colors[0];
+                document.body.appendChild(sp);
+                setTimeout(function(el) { el.remove(); }, 500, sp);
+            }
+        });
+        document.addEventListener('mouseup', function() {
+            dotScale = 1;
+        });
+
+        // 60fps hardware accelerated animation loop
+        function animate() {
+            dx += (mx - dx) * speed;
+            dy += (my - dy) * speed;
+            rx += (mx - rx) * ringSpeed;
+            ry += (my - ry) * ringSpeed;
+            tx += (mx - tx) * trailSpeed;
+            ty += (my - ty) * trailSpeed;
+            
+            dot.style.transform = 'translate3d(' + dx + 'px, ' + dy + 'px, 0) scale(' + dotScale + ') rotate(' + dotAngle + 'deg)';
+            ring.style.transform = 'translate3d(' + rx + 'px, ' + ry + 'px, 0)';
+            trail.style.transform = 'translate3d(' + tx + 'px, ' + ty + 'px, 0)';
+            
+            requestAnimationFrame(animate);
+        }
+        animate();
+    })();
+    </script>
+    <!-- Global Toast Container -->
+    <div id="toast-container" style="position: fixed; bottom: 20px; right: 20px; z-index: 99999; display: flex; flex-direction: column; gap: 10px; pointer-events: none;"></div>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

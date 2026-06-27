@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<style>
+    .filters {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        padding: 2rem;
+        border-bottom: 1px solid var(--color-border);
+        margin-bottom: 3rem;
+    }
+    
+    .filter-btn {
+        padding: 8px 16px;
+        border: 1px solid var(--color-border);
+        background: transparent;
+        color: var(--color-text-muted);
+        text-transform: uppercase;
+        font-family: var(--font-heading);
+        font-weight: 600;
+        cursor: pointer;
+        transition: all var(--transition-fast);
+    }
+    
+    .filter-btn:hover, .filter-btn.active {
+        background: var(--color-accent);
+        color: #fff;
+        border-color: var(--color-accent);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="modern-page-header">
+    <div class="header-bg-glow"></div>
+    <div class="header-content">
+        <h1 class="animated-title">{{ current_category }}</h1>
+        <div class="breadcrumb">
+            <a href="{% url 'home' %}">Home</a> <i data-lucide="chevron-right"></i> <span>{{ current_category }}</span>
+        </div>
+    </div>
+</div>
+
+<div class="shop-layout">
+    <!-- Sidebar Filters -->
+    <aside class="shop-sidebar">
+        <div class="sidebar-block">
+            <h3>CATEGORIES</h3>
+            <ul class="filter-list">
+                <li><a href="{% url 'shop' %}" class="{% if current_category == 'All Products' %}active{% endif %}">All Products</a></li>
+                {% for cat in dynamic_categories %}
+                <li><a href="{% url 'shop' %}?category={{ cat|urlencode }}" class="{% if current_category == cat %}active{% endif %}">{{ cat }} <span></span></a></li>
+                {% endfor %}
+            </ul>
+        </div>
+        <div class="sidebar-block">
+            <h3>SHADES</h3>
+            <ul class="filter-list">
+                <li><a href="{% url 'shop' %}?shade=red" class="{% if active_shade == 'red' %}active{% endif %}">Reds <span style="background:red;width:12px;height:12px;border-radius:50%;display:inline-block;"></span></a></li>
+                <li><a href="{% url 'shop' %}?shade=pink" class="{% if active_shade == 'pink' %}active{% endif %}">Pinks <span style="background:pink;width:12px;height:12px;border-radius:50%;display:inline-block;"></span></a></li>
+                <li><a href="{% url 'shop' %}?shade=nude" class="{% if active_shade == 'nude' %}active{% endif %}">Nudes <span style="background:#e3bc9a;width:12px;height:12px;border-radius:50%;display:inline-block;"></span></a></li>
+                <li><a href="{% url 'shop' %}?shade=black" class="{% if active_shade == 'black' %}active{% endif %}">Blacks/Browns <span style="background:#4a3219;width:12px;height:12px;border-radius:50%;display:inline-block;"></span></a></li>
+            </ul>
+        </div>
+        <div class="sidebar-block">
+            <h3>PRICE</h3>
+            <ul class="filter-list">
+                <li><a href="{% url 'shop' %}?price=under_1000" class="{% if active_price == 'under_1000' %}active{% endif %}">Under ₹1000</a></li>
+                <li><a href="{% url 'shop' %}?price=1000_2000" class="{% if active_price == '1000_2000' %}active{% endif %}">₹1000 - ₹2000</a></li>
+                <li><a href="{% url 'shop' %}?price=over_2000" class="{% if active_price == 'over_2000' %}active{% endif %}">Over ₹2000</a></li>
+            </ul>
+        </div>
+    </aside>
+
+    <!-- Product Grid -->
+    <main style="flex:1; min-width:0;">
+        {% if products %}
+        <div class="product-grid">
+            {% for product in products %}
+            <a href="{% url 'product_detail' product.id %}" class="product-card">
+                <div class="image-wrapper">
+                    <img src="{{ product.image_url }}" alt="{{ product.name }}" class="product-image primary-img" loading="lazy">
+                    {% if product.image_url_2 %}
+                    <img src="{{ product.image_url_2 }}" alt="{{ product.name }} Alternate" class="product-image secondary-img" loading="lazy">
+                    {% else %}
+                    <img src="{{ product.image_url }}" alt="{{ product.name }}" class="product-image secondary-img" loading="lazy">
+                    {% endif %}
+                </div>
+                <div class="product-tags">
+                    {% if product.is_new %}<span class="tag">NEW</span>{% endif %}
+                    {% if product.is_bestseller %}<span class="tag hot">HOT</span>{% endif %}
+                </div>
+                <div class="product-info">
+                    <p class="product-brand">BOLDDIVA</p>
+                    <h3 class="product-name">{{ product.name }}</h3>
+                    <p class="product-price">₹{{ product.price }}</p>
+                    <button class="btn btn-primary add-to-cart-btn" style="width: 100%; padding: 0.8rem;"
+                            data-id="{{ product.id }}" data-name="{{ product.name }}" data-price="{{ product.price }}" data-image="{{ product.image_url }}">
+                        ADD TO CART
+                    </button>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div style="text-align: center; padding: 4rem;">
+            <h3 style="color: var(--color-text-muted);">No products found in this category.</h3>
+        </div>
+        {% endif %}
+    </main>
+</div>
+{% endblock %}

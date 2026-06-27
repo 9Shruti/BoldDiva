@@ -1,0 +1,439 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<style>
+    .account-container {
+        max-width: 1100px;
+        margin: 2rem auto;
+        padding: 0 1.5rem;
+    }
+    .account-grid {
+        display: grid;
+        grid-template-columns: 260px 1fr;
+        gap: 2rem;
+        margin-top: 2rem;
+    }
+    .account-sidebar {
+        background: var(--color-bg-secondary);
+        border-radius: 10px;
+        padding: 1.8rem;
+        height: fit-content;
+        position: sticky;
+        top: 100px;
+    }
+    .account-avatar {
+        width: 64px; height: 64px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--color-accent), #ff6b9d);
+        display: flex; align-items: center; justify-content: center;
+        font-family: var(--font-heading); font-weight: 800; font-size: 1.4rem; color: #fff;
+        margin: 0 auto 0.8rem;
+    }
+    .account-name { text-align: center; font-family: var(--font-heading); font-weight: 700; font-size: 1rem; margin-bottom: 0.2rem; }
+    .account-email { text-align: center; color: var(--color-text-muted); font-size: 0.8rem; margin-bottom: 1.2rem; word-break: break-all; }
+    .sidebar-nav { display: flex; flex-direction: column; gap: 0.2rem; }
+    .sidebar-nav a {
+        display: flex; align-items: center; gap: 0.7rem;
+        padding: 0.65rem 0.9rem; border-radius: 8px;
+        color: var(--color-text-muted); font-size: 0.85rem; font-weight: 500;
+        transition: all 0.2s ease; cursor: pointer;
+    }
+    .sidebar-nav a:hover, .sidebar-nav a.active { background: rgba(255,0,85,0.08); color: var(--color-accent); }
+    .sidebar-nav a i { width: 17px; height: 17px; }
+    .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.8rem; }
+    .stat-card {
+        background: var(--color-bg-secondary); border-radius: 10px; padding: 1.2rem; text-align: center;
+        border-top: 3px solid var(--color-accent);
+    }
+    .stat-card .stat-value { font-family: var(--font-heading); font-size: 1.6rem; font-weight: 800; color: #fff; margin-bottom: 0.2rem; }
+    .stat-card .stat-label { color: var(--color-text-muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; }
+    .account-panel { display: none; }
+    .account-panel.active { display: block; animation: fadeSlideIn 0.3s ease forwards; }
+    @keyframes fadeSlideIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Order Cards */
+    .order-card { background: var(--color-bg-secondary); border-radius: 10px; padding: 1.2rem; margin-bottom: 0.8rem; border: 1px solid transparent; transition: border-color 0.2s; }
+    .order-card:hover { border-color: var(--color-border); }
+    .order-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem; flex-wrap: wrap; gap: 0.4rem; }
+    .order-id { font-family: monospace; font-size: 0.8rem; color: var(--color-text-muted); }
+    .order-status { padding: 0.25rem 0.7rem; border-radius: 20px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+    .status-processing { background: rgba(245,158,11,0.15); color: #F59E0B; }
+    .status-shipped { background: rgba(59,130,246,0.15); color: #3B82F6; }
+    .status-completed { background: rgba(16,185,129,0.15); color: #10B981; }
+    .order-items { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.6rem; }
+    .order-item-thumb { width: 44px; height: 44px; border-radius: 6px; object-fit: cover; border: 1px solid var(--color-border); }
+    .order-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 0.6rem; border-top: 1px solid var(--color-border); font-size: 0.85rem; }
+    .order-date { color: var(--color-text-muted); font-size: 0.8rem; }
+    .order-total { font-family: var(--font-heading); font-weight: 700; color: var(--color-accent); font-size: 1rem; }
+    .order-payment { font-size: 0.78rem; color: var(--color-text-muted); margin-bottom: 0.4rem; }
+
+    /* Profile / Address Cards */
+    .profile-card { background: var(--color-bg-secondary); border-radius: 10px; padding: 1.5rem; }
+    .profile-row { display: flex; justify-content: space-between; padding: 0.8rem 0; border-bottom: 1px solid var(--color-border); }
+    .profile-row:last-child { border-bottom: none; }
+    .profile-label { color: var(--color-text-muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; }
+    .profile-value { font-weight: 500; color: #fff; }
+
+    .form-group { margin-bottom: 1rem; }
+    .form-group label { display: block; margin-bottom: 0.3rem; color: var(--color-text-muted); font-size: 0.82rem; }
+    .form-control {
+        width: 100%; padding: 0.8rem;
+        background-color: var(--color-bg); border: 1px solid var(--color-border);
+        color: var(--color-text); border-radius: 4px; font-family: var(--font-body);
+        transition: border-color 0.2s;
+    }
+    .form-control:focus { outline: none; border-color: var(--color-accent); }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; }
+    select.form-control {
+        appearance: none; -webkit-appearance: none; cursor: pointer;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23A0A0A0' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+        background-repeat: no-repeat; background-position: right 1rem center; padding-right: 2.5rem;
+    }
+    select.form-control option { background-color: var(--color-bg-secondary); color: var(--color-text); }
+
+    /* Address Card */
+    .addr-card {
+        background: var(--color-bg-secondary); border-radius: 10px; padding: 1.2rem; margin-bottom: 0.8rem;
+        border: 1px solid var(--color-border); position: relative; transition: border-color 0.2s;
+    }
+    .addr-card.default { border-color: var(--color-accent); }
+    .addr-default-badge {
+        position: absolute; top: 0.8rem; right: 0.8rem;
+        background: rgba(255,0,85,0.15); color: var(--color-accent);
+        font-size: 0.7rem; font-weight: 700; padding: 0.2rem 0.6rem; border-radius: 12px;
+        text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .addr-actions { display: flex; gap: 0.5rem; margin-top: 0.8rem; }
+    .addr-actions button {
+        background: none; border: 1px solid var(--color-border); color: var(--color-text-muted);
+        padding: 0.4rem 0.8rem; border-radius: 4px; font-size: 0.78rem; cursor: pointer; transition: all 0.2s;
+    }
+    .addr-actions button:hover { border-color: var(--color-accent); color: var(--color-accent); }
+
+    .empty-state { text-align: center; padding: 2.5rem; color: var(--color-text-muted); }
+    .empty-state i { width: 44px; height: 44px; margin-bottom: 0.8rem; opacity: 0.4; }
+
+    .toast-msg {
+        position: fixed; bottom: 2rem; right: 2rem; background: var(--color-accent); color: #fff;
+        padding: 0.8rem 1.5rem; border-radius: 8px; font-weight: 600; font-size: 0.85rem;
+        transform: translateY(100px); opacity: 0; transition: all 0.3s ease; z-index: 9999;
+    }
+    .toast-msg.show { transform: translateY(0); opacity: 1; }
+
+    @media (max-width: 768px) {
+        .account-grid { grid-template-columns: 1fr; }
+        .account-sidebar { position: static; }
+        .stats-row { grid-template-columns: 1fr; }
+        .form-row { grid-template-columns: 1fr; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="modern-page-header">
+    <div class="header-bg-glow"></div>
+    <div class="header-content">
+        <h1 class="animated-title">MY ACCOUNT</h1>
+        <div class="breadcrumb">
+            <a href="{% url 'home' %}">Home</a> <i data-lucide="chevron-right"></i> <span>My Account</span>
+        </div>
+    </div>
+</div>
+
+<div class="account-container">
+    <div class="account-grid">
+        <aside class="account-sidebar">
+            <div class="account-avatar">{{ user.email|make_list|first|upper }}</div>
+            <div class="account-name" id="display-name">{{ profile.name|default:user.email }}</div>
+            <div class="account-email">Member since {{ user.date_joined|date:"M Y" }}</div>
+            <nav class="sidebar-nav">
+                <a class="active" data-panel="panel-orders"><i data-lucide="package"></i> My Orders</a>
+                <a data-panel="panel-profile"><i data-lucide="user-circle"></i> Profile</a>
+                <a data-panel="panel-addresses"><i data-lucide="map-pin"></i> Addresses</a>
+                <a href="{% url 'shop' %}"><i data-lucide="shopping-bag"></i> Continue Shopping</a>
+                <a href="{% url 'logout' %}" style="color:var(--color-accent);"><i data-lucide="log-out"></i> Logout</a>
+            </nav>
+        </aside>
+
+        <div class="account-main">
+            <div class="stats-row">
+                <div class="stat-card"><div class="stat-value">{{ total_orders }}</div><div class="stat-label">Orders</div></div>
+                <div class="stat-card"><div class="stat-value">₹{{ total_spent|floatformat:0 }}</div><div class="stat-label">Total Spent</div></div>
+                <div class="stat-card"><div class="stat-value">{{ addresses|length }}</div><div class="stat-label">Addresses</div></div>
+            </div>
+
+            <!-- ORDERS PANEL -->
+            <section id="panel-orders" class="account-panel active">
+                <h3 style="font-family:var(--font-heading); margin-bottom:1rem;">MY ORDERS</h3>
+                {% if orders %}
+                    {% for order in orders %}
+                    <div class="order-card">
+                        <div class="order-header">
+                            <span class="order-id">#{{ order.id }}</span>
+                            <span class="order-status status-{{ order.status|lower }}">{{ order.status }}</span>
+                        </div>
+                        <div class="order-payment">
+                            <i data-lucide="{% if order.payment_method == 'Card' %}credit-card{% elif order.payment_method == 'UPI' %}smartphone{% else %}banknote{% endif %}" style="width:13px;height:13px;display:inline;vertical-align:middle;"></i>
+                            {{ order.payment_method|default:"COD" }}
+                            {% if order.payment_detail %} · {{ order.payment_detail }}{% endif %}
+                        </div>
+                        {% if order.cart_details %}
+                        <div class="order-items">
+                            {% for item in order.cart_details %}
+                            <img class="order-item-thumb" src="{{ item.image }}" alt="{{ item.name }}" title="{{ item.name }} x{{ item.quantity }}">
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        <p style="font-size:0.85rem; margin-bottom:0.5rem; color:var(--color-text-muted);">{{ order.product_name|default:"Products" }}</p>
+                        <div class="order-footer">
+                            <span class="order-date">{{ order.date }}</span>
+                            <span class="order-total">₹{{ order.total|floatformat:2 }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">
+                        <i data-lucide="package-open"></i>
+                        <h3>No orders yet</h3>
+                        <p style="margin:0.6rem 0 1.2rem;">Place your first order to see it here.</p>
+                        <a href="{% url 'shop' %}" class="btn btn-primary">START SHOPPING</a>
+                    </div>
+                {% endif %}
+            </section>
+
+            <!-- PROFILE PANEL -->
+            <section id="panel-profile" class="account-panel">
+                <h3 style="font-family:var(--font-heading); margin-bottom:1rem;">EDIT PROFILE</h3>
+                <div class="profile-card">
+                    <form id="profile-form">
+                        <div class="form-group">
+                            <label>Full Name</label>
+                            <input type="text" id="prof-name" class="form-control" value="{{ profile.name|default:'' }}" placeholder="Enter your full name">
+                        </div>
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" class="form-control" value="{{ user.email }}" disabled style="opacity:0.6;">
+                            <small style="color:var(--color-text-muted); font-size:0.75rem;">Email cannot be changed.</small>
+                        </div>
+                        <div class="form-group">
+                            <label>Phone</label>
+                            <input type="tel" id="prof-phone" class="form-control" value="{{ profile.phone|default:'' }}" placeholder="+91 00000 00000">
+                        </div>
+                        <div class="form-group">
+                            <label>Member Since</label>
+                            <input type="text" class="form-control" value="{{ user.date_joined|date:'d M Y' }}" disabled style="opacity:0.6;">
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="margin-top:0.5rem;">SAVE CHANGES</button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- ADDRESSES PANEL -->
+            <section id="panel-addresses" class="account-panel">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+                    <h3 style="font-family:var(--font-heading);">MY ADDRESSES</h3>
+                    <button class="btn btn-outline" id="add-addr-btn" style="font-size:0.8rem; padding:0.5rem 1rem;">
+                        <i data-lucide="plus" style="width:14px;height:14px;display:inline;vertical-align:middle;"></i> ADD NEW
+                    </button>
+                </div>
+                <div id="addr-list"></div>
+
+                <!-- Add/Edit Address Form (hidden by default) -->
+                <div id="addr-form-wrap" style="display:none;">
+                    <div class="profile-card">
+                        <h4 style="margin-bottom:1rem; font-family:var(--font-heading);" id="addr-form-title">ADD ADDRESS</h4>
+                        <form id="addr-form">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Label</label>
+                                    <select id="addr-label" class="form-control">
+                                        <option>Home</option><option>Work</option><option>Other</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Full Name</label>
+                                    <input type="text" id="addr-name" class="form-control" required>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Phone</label>
+                                <input type="tel" id="addr-phone" class="form-control" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Address</label>
+                                <input type="text" id="addr-address" class="form-control" required>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>City</label>
+                                    <input type="text" id="addr-city" class="form-control" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>PIN Code</label>
+                                    <input type="text" id="addr-pincode" class="form-control" maxlength="6" required>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>State</label>
+                                <select id="addr-state" class="form-control" required>
+                                    <option value="" disabled selected>Select state</option>
+                                    <option>Andhra Pradesh</option><option>Arunachal Pradesh</option><option>Assam</option>
+                                    <option>Bihar</option><option>Chhattisgarh</option><option>Goa</option><option>Gujarat</option>
+                                    <option>Haryana</option><option>Himachal Pradesh</option><option>Jharkhand</option>
+                                    <option>Karnataka</option><option>Kerala</option><option>Madhya Pradesh</option>
+                                    <option>Maharashtra</option><option>Manipur</option><option>Meghalaya</option>
+                                    <option>Mizoram</option><option>Nagaland</option><option>Odisha</option><option>Punjab</option>
+                                    <option>Rajasthan</option><option>Sikkim</option><option>Tamil Nadu</option>
+                                    <option>Telangana</option><option>Tripura</option><option>Uttar Pradesh</option>
+                                    <option>Uttarakhand</option><option>West Bengal</option>
+                                    <option>Delhi</option><option>Chandigarh</option><option>Jammu & Kashmir</option>
+                                    <option>Ladakh</option><option>Puducherry</option>
+                                </select>
+                            </div>
+                            <div style="display:flex; gap:0.8rem;">
+                                <button type="submit" class="btn btn-primary">SAVE ADDRESS</button>
+                                <button type="button" class="btn btn-outline" id="cancel-addr">CANCEL</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+</div>
+
+<div class="toast-msg" id="toast"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script type="application/json" id="addr-data">{{ addresses|safe }}</script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // Panel switching
+    document.querySelectorAll('.sidebar-nav a[data-panel]').forEach(link => {
+        link.addEventListener('click', e => {
+            e.preventDefault();
+            document.querySelectorAll('.sidebar-nav a[data-panel]').forEach(l => l.classList.remove('active'));
+            document.querySelectorAll('.account-panel').forEach(p => p.classList.remove('active'));
+            link.classList.add('active');
+            document.getElementById(link.dataset.panel).classList.add('active');
+        });
+    });
+
+    function toast(msg) {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), 2500);
+    }
+
+    // ---- PROFILE ----
+    document.getElementById('profile-form').addEventListener('submit', e => {
+        e.preventDefault();
+        const name = document.getElementById('prof-name').value.trim();
+        const phone = document.getElementById('prof-phone').value.trim();
+        fetch('/api/save_profile/', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ name, phone })
+        })
+        .then(r => r.json())
+        .then(d => {
+            if (d.status === 'success') {
+                toast('Profile updated!');
+                document.getElementById('display-name').textContent = name || '{{ user.email }}';
+            } else { toast('Failed to save profile'); }
+        })
+        .catch(() => toast('Error saving profile'));
+    });
+
+    // ---- ADDRESSES ----
+    let addresses = JSON.parse(document.getElementById('addr-data').textContent || '[]');
+
+    function renderAddresses() {
+        const list = document.getElementById('addr-list');
+        if (addresses.length === 0) {
+            list.innerHTML = `<div class="empty-state"><i data-lucide="map-pin-off"></i><h3>No addresses saved</h3><p style="margin-top:0.5rem;">Add your first address to speed up checkout.</p></div>`;
+            lucide.createIcons();
+            return;
+        }
+        list.innerHTML = addresses.map((a, i) => `
+            <div class="addr-card ${a.is_default ? 'default' : ''}">
+                ${a.is_default ? '<span class="addr-default-badge">Default</span>' : ''}
+                <p style="font-weight:600; margin-bottom:0.2rem;">${a.label || 'Home'} · ${a.name}</p>
+                <p style="color:var(--color-text-muted); font-size:0.85rem;">${a.address}, ${a.city}, ${a.state} - ${a.pincode}</p>
+                <p style="color:var(--color-text-muted); font-size:0.8rem; margin-top:0.2rem;">📞 ${a.phone}</p>
+                <div class="addr-actions">
+                    ${!a.is_default ? `<button onclick="setDefault(${i})">Set Default</button>` : ''}
+                    <button onclick="deleteAddr(${i})" style="color:var(--color-accent);">Delete</button>
+                </div>
+            </div>
+        `).join('');
+        lucide.createIcons();
+    }
+    renderAddresses();
+
+    document.getElementById('add-addr-btn').addEventListener('click', () => {
+        document.getElementById('addr-form-wrap').style.display = 'block';
+        document.getElementById('addr-form').reset();
+        document.getElementById('addr-form-wrap').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+    document.getElementById('cancel-addr').addEventListener('click', () => {
+        document.getElementById('addr-form-wrap').style.display = 'none';
+    });
+
+    document.getElementById('addr-form').addEventListener('submit', e => {
+        e.preventDefault();
+        const data = {
+            action: 'add',
+            label: document.getElementById('addr-label').value,
+            name: document.getElementById('addr-name').value,
+            phone: document.getElementById('addr-phone').value,
+            address: document.getElementById('addr-address').value,
+            city: document.getElementById('addr-city').value,
+            state: document.getElementById('addr-state').value,
+            pincode: document.getElementById('addr-pincode').value
+        };
+        fetch('/api/save_address/', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+        })
+        .then(r => r.json())
+        .then(d => {
+            if (d.status === 'success') {
+                addresses = d.addresses;
+                renderAddresses();
+                document.getElementById('addr-form-wrap').style.display = 'none';
+                toast('Address added!');
+            } else { toast('Failed to save'); }
+        });
+    });
+
+    window.setDefault = function(idx) {
+        fetch('/api/save_address/', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ action: 'set_default', index: idx })
+        })
+        .then(r => r.json())
+        .then(d => {
+            if (d.status === 'success') { addresses = d.addresses; renderAddresses(); toast('Default address updated!'); }
+        });
+    };
+
+    window.deleteAddr = function(idx) {
+        if (!confirm('Delete this address?')) return;
+        fetch('/api/save_address/', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ action: 'delete', index: idx })
+        })
+        .then(r => r.json())
+        .then(d => {
+            if (d.status === 'success') { addresses = d.addresses; renderAddresses(); toast('Address removed!'); }
+        });
+    };
+});
+</script>
+{% endblock %}

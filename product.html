@@ -1,0 +1,424 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<style>
+    .pdp-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem 1.5rem;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+        align-items: start;
+    }
+    
+    .zoom-wrapper {
+        position: relative;
+        overflow: hidden;
+        border-radius: 8px;
+        aspect-ratio: 4/5;
+        max-width: 500px;
+        margin: 0 auto;
+        cursor: zoom-in;
+    }
+    
+    .zoom-wrapper img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.5s ease;
+    }
+    
+    .zoom-wrapper:hover img {
+        transform: scale(1.5);
+    }
+    
+    .pdp-info-col {
+        padding-top: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+    
+    .pdp-brand {
+        color: var(--color-accent);
+        font-family: var(--font-heading);
+        font-weight: 800;
+        letter-spacing: 2px;
+        margin-bottom: 1rem;
+    }
+    
+    .pdp-title {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+        line-height: 1.2;
+    }
+    
+    .pdp-price {
+        font-family: var(--font-heading);
+        font-size: 1.5rem;
+        color: var(--color-text);
+        margin-bottom: 1.5rem;
+    }
+    
+    .pdp-desc {
+        color: var(--color-text-muted);
+        font-size: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .benefits-list {
+        margin-bottom: 3rem;
+        list-style: none;
+    }
+    
+    .benefits-list li {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 10px;
+        font-weight: 500;
+    }
+    
+    .benefits-list i {
+        color: var(--color-accent);
+        width: 20px;
+    }
+    
+    .action-row {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 3rem;
+    }
+    
+    .action-row .btn {
+        flex: 1;
+        padding: 1.2rem;
+        font-size: 1.1rem;
+    }
+    
+    
+    /* Shade */
+    .shades {
+        margin-bottom: 2rem;
+    }
+    .shade-title { font-weight: 600; margin-bottom: 0.5rem; text-transform: uppercase; font-family: var(--font-heading); }
+    .swatches { display: flex; gap: 10px; }
+    .swatch { width: 30px; height: 30px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: all 0.2s; }
+    .swatch.active { border-color: #fff; transform: scale(1.1); }
+    
+    /* Sticky CTA */
+    .sticky-cta {
+        position: fixed;
+        bottom: -100px;
+        left: 0; width: 100%;
+        background: rgba(22,22,22,0.95);
+        backdrop-filter: blur(10px);
+        padding: 1rem 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        z-index: 100;
+        transition: bottom 0.3s ease;
+        border-top: 1px solid var(--color-border);
+    }
+    .sticky-cta.visible { bottom: 0; }
+    
+    /* Reviews */
+    .pdp-reviews { padding: 3rem 0; border-top: 1px solid var(--color-border); }
+
+    /* Media Queries for Responsiveness */
+    @media (max-width: 768px) {
+        .pdp-container {
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+            padding: 1.5rem 1rem;
+        }
+        
+        .pdp-title {
+            font-size: 2rem;
+        }
+        
+        .action-row {
+            flex-direction: column;
+            gap: 0.8rem;
+            margin-bottom: 2rem;
+        }
+        
+        .look-card-overlay {
+            padding: 1rem;
+        }
+        
+        .look-name {
+            font-size: 1.1rem;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .pdp-title {
+            font-size: 1.8rem;
+        }
+        
+        .pdp-price {
+            font-size: 1.3rem;
+        }
+        
+        .pdp-desc {
+            font-size: 0.95rem;
+        }
+        
+        .sticky-cta {
+            padding: 0.8rem 1rem;
+            flex-direction: column;
+            gap: 0.5rem;
+            align-items: stretch;
+            text-align: center;
+        }
+        
+        .sticky-cta .btn {
+            width: 100%;
+        }
+    }
+    
+    /* Complete The Look Cards */
+    .complete-look-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 2rem;
+    }
+    
+    @media (max-width: 768px) {
+        .complete-look-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .complete-look-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .look-card {
+        position: relative;
+        border-radius: 12px;
+        overflow: hidden;
+        aspect-ratio: 4/5;
+        display: block;
+    }
+    
+    .look-card img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    
+    .look-card-overlay {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.2) 60%, transparent 100%);
+        padding: 2rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        align-items: flex-start;
+        transition: background 0.4s ease;
+    }
+    
+    .look-card:hover img {
+        transform: scale(1.08);
+    }
+    
+    .look-card:hover .look-card-overlay {
+        background: linear-gradient(to top, rgba(255,0,85,0.9) 0%, rgba(0,0,0,0.6) 60%, transparent 100%);
+    }
+
+    .look-brand {
+        color: rgba(255,255,255,0.8);
+        font-family: var(--font-heading);
+        font-size: 0.8rem;
+        letter-spacing: 2px;
+        margin-bottom: 0.5rem;
+    }
+    
+    .look-name {
+        color: #fff;
+        font-size: 1.3rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        text-align: left;
+    }
+    
+    .look-price {
+        color: var(--color-accent);
+        font-family: var(--font-heading);
+        font-size: 1.2rem;
+        font-weight: 800;
+        margin-bottom: 0;
+        transition: color 0.4s ease;
+    }
+    
+    .look-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #fff;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-top: 1rem;
+        opacity: 0;
+        max-height: 0;
+        overflow: hidden;
+        transform: translateY(10px);
+        transition: all 0.4s ease;
+    }
+    
+    .look-card:hover .look-price {
+        color: #fff;
+    }
+    
+    .look-card:hover .look-btn {
+        opacity: 1;
+        max-height: 30px;
+        transform: translateY(0);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="pdp-container">
+    <div class="pdp-image-col">
+        <div class="zoom-wrapper">
+            <img src="{{ product.image_url }}" alt="{{ product.name }}">
+        </div>
+    </div>
+    <div class="pdp-info-col">
+        <div class="pdp-brand">BOLDDIVA</div>
+        <h1 class="pdp-title">{{ product.name }}</h1>
+        <div class="pdp-price">₹{{ product.price }}</div>
+        
+        <p class="pdp-desc">{{ product.description }} <br><strong style="color:#fff;">Smudge-proof. All-day power.</strong></p>
+        
+
+
+        <div class="shades">
+            <div class="shade-title">Select Shade</div>
+            <div class="swatches">
+                <div class="swatch active" style="background-color: #b91c1c;"></div>
+                <div class="swatch" style="background-color: #be123c;"></div>
+                <div class="swatch" style="background-color: #c2410c;"></div>
+                <div class="swatch" style="background-color: #4a044e;"></div>
+            </div>
+        </div>
+
+        {% if product.benefits %}
+        <ul class="benefits-list">
+            {% for benefit in product.benefits %}
+            <li><i data-lucide="check-circle"></i> {{ benefit }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+        
+        <div class="action-row" id="main-action-row">
+            <button class="btn btn-primary add-to-cart-btn"
+                    data-id="{{ product.id }}" data-name="{{ product.name }}" data-price="{{ product.price }}" data-image="{{ product.image_url }}">
+                ADD TO CART
+            </button>
+            <button class="btn btn-outline buy-now-btn"
+                    data-id="{{ product.id }}" data-name="{{ product.name }}" data-price="{{ product.price }}" data-image="{{ product.image_url }}">BUY NOW</button>
+        </div>
+        
+        <!-- Accordions could go here -->
+        <div style="border-top: 1px solid var(--color-border); padding-top: 2rem;">
+            <p style="font-family: var(--font-heading); font-weight: 600; margin-bottom: 1rem;">INGREDIENTS</p>
+            <p style="color: var(--color-text-muted); font-size: 0.9rem;">Clean, cruelty-free, vegan formula. Free from parabens and sulfates.</p>
+        </div>
+    </div>
+</div>
+
+<!-- Sticky CTA -->
+<div class="sticky-cta" id="sticky-cta">
+    <div style="display: flex; align-items: center; gap: 1rem;">
+        <img src="{{ product.image_url }}" alt="..." style="width: 50px; height: 50px; border-radius: 4px; object-fit: cover;">
+        <div>
+            <h4 style="margin: 0; line-height: 1;">{{ product.name }}</h4>
+            <span style="color: var(--color-accent); font-weight: bold;">₹{{ product.price }}</span>
+        </div>
+    </div>
+    <button class="btn btn-primary add-to-cart-btn" style="padding: 0.8rem 2rem;" 
+            data-id="{{ product.id }}" data-name="{{ product.name }}" data-price="{{ product.price }}" data-image="{{ product.image_url }}">
+        ADD TO CART
+    </button>
+</div>
+
+<!-- Reviews Section -->
+<div class="pdp-container pdp-reviews" style="display:block;">
+    <h2 class="section-title">CUSTOMER REVIEWS</h2>
+    <div style="display: flex; gap: 2rem; overflow-x: auto; padding-bottom: 1rem;">
+        <div style="min-width: 300px; background: var(--color-bg-secondary); padding: 1.5rem; border-radius: 8px;">
+            <div style="color: var(--color-accent); margin-bottom:0.5rem;">★★★★★</div>
+            <p>"Absolutely stunning! The texture is perfect and it lasts all day long."</p>
+            <p style="color: var(--color-text-muted); font-size: 0.9rem; margin-top: 1rem;">- Sneha K.</p>
+        </div>
+        <div style="min-width: 300px; background: var(--color-bg-secondary); padding: 1.5rem; border-radius: 8px;">
+            <div style="color: var(--color-accent); margin-bottom:0.5rem;">★★★★★</div>
+            <p>"My holy grail product. I've bought three backups already."</p>
+            <p style="color: var(--color-text-muted); font-size: 0.9rem; margin-top: 1rem;">- Riya M.</p>
+        </div>
+    </div>
+</div>
+
+<!-- "Complete the Look" (Upsell) -->
+{% if bestsellers %}
+<section class="section-padding" style="background-color: var(--color-bg-tertiary);">
+    <div style="max-width: 1400px; margin: 0 auto; text-align: center;">
+        <h2 class="section-title">COMPLETE THE LOOK</h2>
+        <p style="color: var(--color-text-muted); margin-bottom: 3rem;">Pair your {{ product.category|lower }} choice with these essentials.</p>
+        <div class="complete-look-grid">
+            {% for pdp_product in bestsellers|slice:":3" %}
+            <a href="{% url 'product_detail' pdp_product.id %}" class="look-card">
+                <img src="{{ pdp_product.image_url }}" alt="{{ pdp_product.name }}" loading="lazy">
+                <div class="look-card-overlay">
+                    <p class="look-brand">BOLDDIVA</p>
+                    <h3 class="look-name">{{ pdp_product.name }}</h3>
+                    <p class="look-price">₹{{ pdp_product.price }}</p>
+                    <span class="look-btn">VIEW PRODUCT <i data-lucide="arrow-right"></i></span>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<script>
+    // Zoom logic is pure CSS (cursor: zoom-in) & transform on hover.
+    
+    // Sticky CTA logic
+    document.addEventListener('DOMContentLoaded', () => {
+        const actionRow = document.getElementById('main-action-row');
+        const stickyCta = document.getElementById('sticky-cta');
+        
+        window.addEventListener('scroll', () => {
+            const rect = actionRow.getBoundingClientRect();
+            if (rect.bottom < 0) {
+                stickyCta.classList.add('visible');
+            } else {
+                stickyCta.classList.remove('visible');
+            }
+        });
+        
+        // Swatch logic
+        document.querySelectorAll('.swatch').forEach(swatch => {
+            swatch.addEventListener('click', function() {
+                document.querySelectorAll('.swatch').forEach(s => s.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+    });
+</script>
+{% endblock %}

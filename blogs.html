@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<style>
+
+    
+    .blog-grid {
+        max-width: 1100px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 2rem;
+        padding: 2rem 1.5rem;
+    }
+    
+    .blog-card {
+        background: var(--color-bg-secondary);
+        border-radius: 12px;
+        overflow: hidden;
+        transition: transform 0.3s ease;
+    }
+    
+    .blog-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .blog-image {
+        width: 100%;
+        height: 220px;
+        object-fit: cover;
+    }
+    
+    .blog-content {
+        padding: 1.5rem;
+    }
+    
+    .blog-tag {
+        color: var(--color-accent);
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-size: 0.9rem;
+        margin-bottom: 1rem;
+        display: block;
+    }
+    
+    .blog-title {
+        font-size: 1.5rem;
+        line-height: 1.3;
+        margin-bottom: 0.8rem;
+    }
+    
+    .blog-excerpt {
+        color: var(--color-text-muted);
+        margin-bottom: 1rem;
+        font-size: 0.95rem;
+    }
+
+    @media (max-width: 768px) {
+        .blog-grid { grid-template-columns: 1fr; gap: 1.5rem; padding: 1.5rem 1rem; }
+        .blog-image { height: 180px; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="modern-page-header">
+    <div class="header-bg-glow"></div>
+    <div class="header-content">
+        <h1 class="animated-title">THE DIVA EDIT</h1>
+        <div class="breadcrumb">
+            <a href="{% url 'home' %}">Home</a> <i data-lucide="chevron-right"></i> <span>Beauty Blog</span>
+        </div>
+        <p style="color:var(--color-text-muted); font-size: 1.1rem; margin-top:0.5rem; animation: textSlideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.3s forwards; opacity: 0; transform: translateY(20px);">Pro Tips. Trends. Bold Moves.</p>
+    </div>
+</div>
+
+<div class="blog-grid">
+    <article class="blog-card">
+        <img src="https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=800&q=80" alt="Best lipstick for Indian skin" class="blog-image">
+        <div class="blog-content">
+            <span class="blog-tag">LIPS</span>
+            <h2 class="blog-title">The Ultimate Guide: Best Lipsticks for Indian Skin Tones</h2>
+            <p class="blog-excerpt">From deep maroons to peachy nudes, finding the perfect shade that complements olive and warm undertones doesn't have to be a struggle.</p>
+        </div>
+    </article>
+    
+    <article class="blog-card">
+        <img src="https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=800&q=80" alt="Matte vs Glossy" class="blog-image">
+        <div class="blog-content">
+            <span class="blog-tag">BEAUTY DEBATE</span>
+            <h2 class="blog-title">Matte vs Glossy: Which Finish Should You Choose?</h2>
+            <p class="blog-excerpt">The age-old debate continues. We break down the pros, cons, and best occasions for both finishes so you can conquer any room.</p>
+        </div>
+    </article>
+</div>
+{% endblock %}

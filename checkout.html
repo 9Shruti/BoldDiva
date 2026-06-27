@@ -1,0 +1,494 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<style>
+    .checkout-container {
+        max-width: 1100px;
+        margin: 2rem auto;
+        padding: 0 1.5rem;
+        display: grid;
+        grid-template-columns: 1fr 350px;
+        gap: 2rem;
+    }
+    
+    .form-group {
+        margin-bottom: 1.2rem;
+    }
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 0.4rem;
+        color: var(--color-text-muted);
+        font-size: 0.85rem;
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 0.9rem;
+        background-color: var(--color-bg-secondary);
+        border: 1px solid var(--color-border);
+        color: var(--color-text);
+        border-radius: 4px;
+        font-family: var(--font-body);
+        transition: border-color 0.2s ease;
+    }
+    
+    .form-control:focus {
+        outline: none;
+        border-color: var(--color-accent);
+    }
+    
+    .form-control.is-invalid {
+        border-color: var(--color-accent);
+    }
+    
+    select.form-control {
+        appearance: none;
+        -webkit-appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23A0A0A0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 1rem center;
+        padding-right: 2.5rem;
+        cursor: pointer;
+    }
+    
+    select.form-control option,
+    select.form-control optgroup {
+        background-color: var(--color-bg-secondary);
+        color: var(--color-text);
+    }
+    
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+    
+    .field-error {
+        display: none;
+        color: var(--color-accent);
+        font-size: 0.78rem;
+        margin-top: 0.3rem;
+    }
+
+    /* Payment Tabs */
+    .payment-tabs {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.8rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .pay-tab {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 1rem;
+        border-radius: 8px;
+        border: 1px solid var(--color-border);
+        background: var(--color-bg);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-align: center;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--color-text-muted);
+    }
+    
+    .pay-tab:hover {
+        border-color: var(--color-accent);
+        color: var(--color-text);
+    }
+    
+    .pay-tab.active {
+        border-color: var(--color-accent);
+        background: rgba(255, 0, 85, 0.08);
+        color: var(--color-accent);
+        box-shadow: 0 0 12px rgba(255, 0, 85, 0.15);
+    }
+    
+    .pay-panel {
+        display: none;
+        margin-bottom: 1rem;
+    }
+    
+    .pay-panel.active {
+        display: block;
+        animation: fadeSlideIn 0.3s ease forwards;
+    }
+    
+    @keyframes fadeSlideIn {
+        from { opacity: 0; transform: translateY(8px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 768px) {
+        .checkout-container { grid-template-columns: 1fr; gap: 1.5rem; }
+        .form-row { grid-template-columns: 1fr; }
+        .payment-tabs { grid-template-columns: 1fr; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="modern-page-header">
+    <div class="header-bg-glow"></div>
+    <div class="header-content">
+        <h1 class="animated-title">CHECKOUT</h1>
+        <div class="breadcrumb">
+            <a href="{% url 'home' %}">Home</a> <i data-lucide="chevron-right"></i> <a href="{% url 'cart' %}">Cart</a> <i data-lucide="chevron-right"></i> <span>Checkout</span>
+        </div>
+    </div>
+</div>
+{% if request.user.is_superuser %}
+<div class="checkout-container" style="margin-top: 2rem; display: block; text-align: center;">
+    <div style="padding: 3rem; background: var(--color-bg-secondary); border-radius: 8px;">
+        <i data-lucide="shield-alert" style="width: 48px; height: 48px; margin-bottom: 1rem; color: var(--color-accent);"></i>
+        <h2>ADMIN PREVIEW MODE</h2>
+        <p style="margin: 1rem 0; color: var(--color-text-muted);">Admins cannot place orders. Log in as a customer to purchase.</p>
+        <a href="{% url 'shop' %}" class="btn btn-outline" style="margin-top: 1rem;">RETURN TO SHOP</a>
+    </div>
+</div>
+{% else %}
+<div class="checkout-container" style="margin-top: 2rem;">
+    <div>
+        <form id="checkout-form" novalidate>
+            <h3 style="margin-bottom: 1.2rem;">SHIPPING INFORMATION</h3>
+            
+            <!-- Saved Address Picker -->
+            {% if request.user.is_authenticated %}
+            <div id="saved-addr-section" style="margin-bottom:1.5rem; display:none;">
+                <label style="display:block; margin-bottom:0.4rem; color:var(--color-text-muted); font-size:0.85rem;">Use a saved address</label>
+                <select id="saved-addr-select" class="form-control" style="margin-bottom:0.5rem;">
+                    <option value="">— Enter new address —</option>
+                </select>
+            </div>
+            {% endif %}
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label>First Name</label>
+                    <input type="text" id="ship-fname" class="form-control" required>
+                    <span class="field-error"></span>
+                </div>
+                <div class="form-group">
+                    <label>Last Name</label>
+                    <input type="text" id="ship-lname" class="form-control" required>
+                    <span class="field-error"></span>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label>Address</label>
+                <input type="text" id="ship-address" class="form-control" required>
+                <span class="field-error"></span>
+            </div>
+            
+            <div class="form-group">
+                <label>Phone Number</label>
+                <input type="tel" id="ship-phone" class="form-control" placeholder="+91 00000 00000" required>
+                <span class="field-error"></span>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label>City</label>
+                    <input type="text" id="ship-city" class="form-control" required>
+                    <span class="field-error"></span>
+                </div>
+                <div class="form-group">
+                    <label>Postal Code</label>
+                    <input type="text" id="ship-pincode" class="form-control" maxlength="6" required>
+                    <span class="field-error"></span>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label>State</label>
+                <select id="ship-state" class="form-control" required>
+                    <option value="" disabled selected>Select your state</option>
+                    <option>Andhra Pradesh</option><option>Arunachal Pradesh</option><option>Assam</option>
+                    <option>Bihar</option><option>Chhattisgarh</option><option>Goa</option><option>Gujarat</option>
+                    <option>Haryana</option><option>Himachal Pradesh</option><option>Jharkhand</option>
+                    <option>Karnataka</option><option>Kerala</option><option>Madhya Pradesh</option>
+                    <option>Maharashtra</option><option>Manipur</option><option>Meghalaya</option>
+                    <option>Mizoram</option><option>Nagaland</option><option>Odisha</option><option>Punjab</option>
+                    <option>Rajasthan</option><option>Sikkim</option><option>Tamil Nadu</option>
+                    <option>Telangana</option><option>Tripura</option><option>Uttar Pradesh</option>
+                    <option>Uttarakhand</option><option>West Bengal</option>
+                    <optgroup label="Union Territories">
+                        <option>Andaman & Nicobar Islands</option><option>Chandigarh</option>
+                        <option>Delhi</option><option>Jammu & Kashmir</option><option>Ladakh</option>
+                        <option>Lakshadweep</option><option>Puducherry</option>
+                    </optgroup>
+                </select>
+                <span class="field-error"></span>
+            </div>
+            
+            <!-- PAYMENT METHOD SELECTOR -->
+            <h3 style="margin: 2rem 0 1rem;">PAYMENT METHOD</h3>
+            <div class="payment-tabs">
+                <label class="pay-tab active" data-method="cod">
+                    <input type="radio" name="payment_method" value="cod" checked hidden>
+                    <i data-lucide="banknote" style="width:20px;height:20px;"></i>
+                    <span>Cash on Delivery</span>
+                </label>
+                <label class="pay-tab" data-method="card">
+                    <input type="radio" name="payment_method" value="card" hidden>
+                    <i data-lucide="credit-card" style="width:20px;height:20px;"></i>
+                    <span>Card</span>
+                </label>
+                <label class="pay-tab" data-method="upi">
+                    <input type="radio" name="payment_method" value="upi" hidden>
+                    <i data-lucide="smartphone" style="width:20px;height:20px;"></i>
+                    <span>UPI</span>
+                </label>
+            </div>
+            
+            <!-- COD -->
+            <div class="pay-panel active" id="pay-cod">
+                <div style="text-align:center; padding:1.2rem; color:var(--color-text-muted); background:var(--color-bg); border-radius:8px;">
+                    <i data-lucide="truck" style="width:36px;height:36px; margin-bottom:0.5rem; color:var(--color-accent);"></i>
+                    <p>Pay with cash when your order arrives at your doorstep.</p>
+                    <p style="margin-top:0.3rem; font-size:0.8rem;">No extra charges.</p>
+                </div>
+            </div>
+            
+            <!-- Card -->
+            <div class="pay-panel" id="pay-card">
+                <div class="form-group">
+                    <label>Card Number</label>
+                    <input type="text" id="card-number" class="form-control" placeholder="0000 0000 0000 0000" maxlength="19">
+                    <span class="field-error"></span>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Expiry Date</label>
+                        <input type="text" id="card-expiry" class="form-control" placeholder="MM/YY" maxlength="5">
+                        <span class="field-error"></span>
+                    </div>
+                    <div class="form-group">
+                        <label>CVV</label>
+                        <input type="password" id="card-cvv" class="form-control" placeholder="•••" maxlength="4">
+                        <span class="field-error"></span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Name on Card</label>
+                    <input type="text" id="card-name" class="form-control" placeholder="FULL NAME">
+                    <span class="field-error"></span>
+                </div>
+            </div>
+            
+            <!-- UPI -->
+            <div class="pay-panel" id="pay-upi">
+                <div class="form-group">
+                    <label>UPI ID</label>
+                    <input type="text" id="upi-id" class="form-control" placeholder="yourname@upi">
+                    <span class="field-error"></span>
+                </div>
+                <p style="font-size:0.8rem; color:var(--color-text-muted); margin-top:0.3rem;">Supports Google Pay, PhonePe, Paytm & all UPI apps.</p>
+            </div>
+            
+            <button type="submit" id="place-order-btn" class="btn btn-primary" style="width:100%; margin-top:1.5rem; padding:1rem; font-size:1.05rem;">
+                PLACE ORDER
+            </button>
+        </form>
+    </div>
+    
+    <div>
+        <div style="background-color:var(--color-bg-secondary); padding:1.5rem; border-radius:8px; position:sticky; top:100px;">
+            <h3 style="margin-bottom:1.2rem;">ORDER SUMMARY</h3>
+            <div id="checkout-items"></div>
+            <div style="border-top:1px solid var(--color-border); margin-top:1rem; padding-top:1rem;">
+                <div style="display:flex; justify-content:space-between; font-weight:600; font-size:1.1rem;">
+                    <span>Total</span>
+                    <span id="checkout-total" style="color:var(--color-accent); font-family:var(--font-heading);">₹0.00</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Success Modal -->
+<div class="search-overlay" id="success-modal" style="background:rgba(10,10,10,0.98); align-items:center;">
+    <div style="text-align:center; max-width:460px; padding:2.5rem; background:var(--color-bg-secondary); border-radius:12px; border-top:4px solid var(--color-accent); box-shadow:0 20px 50px rgba(0,0,0,0.5);">
+        <i data-lucide="check-circle" style="width:56px; height:56px; color:#10B981; margin-bottom:1rem;"></i>
+        <h2 style="font-size:2rem; margin-bottom:0.8rem; font-family:var(--font-heading);">ORDER CONFIRMED!</h2>
+        <p style="color:var(--color-text-muted); margin-bottom:1.5rem; font-size:0.95rem;">Your Bolddiva order has been placed successfully.</p>
+        <p id="order-id-display" style="color:var(--color-accent); font-family:monospace; margin-bottom:1.2rem;"></p>
+        <button id="success-close-btn" class="btn btn-primary" style="width:100%;">CONTINUE SHOPPING</button>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const cart = JSON.parse(localStorage.getItem('bolddiva_cart')) || [];
+    if (cart.length === 0) { window.location.href = "{% url 'cart' %}"; return; }
+    
+    let subtotal = 0;
+    let itemsHtml = '';
+    cart.forEach(item => {
+        const t = item.price * item.quantity;
+        subtotal += t;
+        itemsHtml += `<div style="display:flex; gap:0.8rem; margin-bottom:0.8rem;">
+            <img src="${item.image}" style="width:50px;height:50px;object-fit:cover;border-radius:4px;">
+            <div><p style="font-weight:500;font-size:0.85rem;">${item.name} <span style="color:var(--color-text-muted);">x${item.quantity}</span></p>
+            <p style="color:var(--color-accent);font-family:var(--font-heading);font-weight:600;font-size:0.85rem;">₹${t.toFixed(2)}</p></div></div>`;
+    });
+    document.getElementById('checkout-items').innerHTML = itemsHtml;
+    document.getElementById('checkout-total').innerText = '₹' + subtotal.toFixed(2);
+    
+    // Load saved addresses
+    const addrSection = document.getElementById('saved-addr-section');
+    const addrSelect = document.getElementById('saved-addr-select');
+    if (addrSection && addrSelect) {
+        fetch('/api/get_addresses/')
+        .then(r => r.json())
+        .then(d => {
+            if (d.addresses && d.addresses.length > 0) {
+                addrSection.style.display = 'block';
+                d.addresses.forEach((a, i) => {
+                    const opt = document.createElement('option');
+                    opt.value = i;
+                    opt.textContent = (a.is_default ? '★ ' : '') + a.label + ' — ' + a.address + ', ' + a.city;
+                    addrSelect.appendChild(opt);
+                });
+                // Auto-select default
+                const defIdx = d.addresses.findIndex(a => a.is_default);
+                if (defIdx >= 0) {
+                    addrSelect.value = defIdx;
+                    fillAddress(d.addresses[defIdx], d.profile);
+                }
+                addrSelect.addEventListener('change', () => {
+                    if (addrSelect.value === '') {
+                        ['ship-fname','ship-lname','ship-address','ship-phone','ship-city','ship-pincode','ship-state'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+                    } else {
+                        fillAddress(d.addresses[addrSelect.value], d.profile);
+                    }
+                });
+            }
+        }).catch(() => {});
+    }
+    
+    function fillAddress(a, profile) {
+        const nameParts = (a.name || (profile && profile.name) || '').split(' ');
+        document.getElementById('ship-fname').value = nameParts[0] || '';
+        document.getElementById('ship-lname').value = nameParts.slice(1).join(' ') || '';
+        document.getElementById('ship-address').value = a.address || '';
+        document.getElementById('ship-phone').value = a.phone || '';
+        document.getElementById('ship-city').value = a.city || '';
+        document.getElementById('ship-pincode').value = a.pincode || '';
+        document.getElementById('ship-state').value = a.state || '';
+    }
+    
+    // Payment tab switching
+    document.querySelectorAll('.pay-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            document.querySelectorAll('.pay-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.pay-panel').forEach(p => p.classList.remove('active'));
+            tab.classList.add('active');
+            tab.querySelector('input').checked = true;
+            document.getElementById('pay-' + tab.dataset.method).classList.add('active');
+        });
+    });
+    
+    // Validation
+    function showErr(inp, msg) {
+        inp.classList.add('is-invalid');
+        const e = inp.parentElement.querySelector('.field-error');
+        if (e) { e.textContent = msg; e.style.display = 'block'; }
+    }
+    function clearErr(inp) {
+        inp.classList.remove('is-invalid');
+        const e = inp.parentElement.querySelector('.field-error');
+        if (e) { e.textContent = ''; e.style.display = 'none'; }
+    }
+    document.querySelectorAll('.form-control').forEach(i => i.addEventListener('input', () => clearErr(i)));
+    
+    document.getElementById('checkout-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        let ok = true;
+        
+        const f = id => document.getElementById(id);
+        const v = (id, msg, test) => { const el = f(id); if (!test(el.value)) { showErr(el, msg); ok = false; } };
+        
+        v('ship-fname', 'Required', x => x.trim().length >= 1);
+        v('ship-lname', 'Required', x => x.trim().length >= 1);
+        v('ship-address', 'Min 5 characters', x => x.trim().length >= 5);
+        v('ship-phone', 'Enter 10+ digit phone', x => x.replace(/\D/g,'').length >= 10);
+        v('ship-city', 'Required', x => x.trim().length >= 1);
+        v('ship-pincode', 'Enter 6-digit PIN', x => /^[0-9]{6}$/.test(x));
+        v('ship-state', 'Select a state', x => x !== '');
+        
+        const method = document.querySelector('input[name="payment_method"]:checked').value;
+        let payDetail = '';
+        
+        if (method === 'card') {
+            v('card-number', 'Enter 16-digit number', x => x.replace(/\s/g,'').length >= 16);
+            v('card-expiry', 'Use MM/YY', x => /^\d{2}\/\d{2}$/.test(x));
+            v('card-cvv', 'Enter CVV', x => x.length >= 3);
+            v('card-name', 'Required', x => x.trim().length >= 1);
+            payDetail = 'Card ending ' + (f('card-number').value.replace(/\s/g,'').slice(-4) || '****');
+        } else if (method === 'upi') {
+            v('upi-id', 'Enter valid UPI (name@upi)', x => x.includes('@'));
+            payDetail = f('upi-id').value;
+        } else {
+            payDetail = 'Pay on delivery';
+        }
+        
+        if (!ok) {
+            const firstErr = document.querySelector('.is-invalid');
+            if (firstErr) firstErr.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
+        }
+        
+        const btn = f('place-order-btn');
+        btn.disabled = true;
+        btn.textContent = 'PROCESSING...';
+        
+        const orderData = {
+            firstName: f('ship-fname').value,
+            lastName: f('ship-lname').value,
+            phone: f('ship-phone').value,
+            address: f('ship-address').value + ', ' + f('ship-city').value + ', ' + f('ship-state').value + ' - ' + f('ship-pincode').value,
+            payment_method: method === 'cod' ? 'Cash on Delivery' : method === 'card' ? 'Card' : 'UPI',
+            payment_detail: payDetail,
+            cart: cart,
+            total: subtotal
+        };
+        
+        fetch('/api/place_order/', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(orderData)
+        })
+        .then(r => {
+            if (!r.ok && r.status === 403) {
+                throw new Error('You must be logged in as a customer to place orders.');
+            }
+            return r.json().catch(() => { throw new Error('Server error (status ' + r.status + ')'); });
+        })
+        .then(data => {
+            if (data.status === 'success') {
+                document.getElementById('order-id-display').textContent = 'Order ID: ' + (data.order_id || '');
+                document.getElementById('success-modal').classList.add('active');
+                lucide.createIcons();
+                document.getElementById('success-close-btn').addEventListener('click', () => {
+                    localStorage.removeItem('bolddiva_cart');
+                    window.location.href = "{% url 'home' %}";
+                });
+            } else {
+                btn.disabled = false; btn.textContent = 'PLACE ORDER';
+                alert(data.message || 'Error placing order.');
+            }
+        })
+        .catch((err) => { btn.disabled = false; btn.textContent = 'PLACE ORDER'; alert(err.message || 'Network error.'); });
+    });
+});
+</script>
+{% endblock %}
