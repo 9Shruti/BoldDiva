@@ -4,12 +4,11 @@
 BoldDiva is a beauty and cosmetics e-commerce website developed using Django, HTML, CSS, JavaScript, and SQLite.
 
 ## Features
-- User Registration & Login
-- Product Catalog
+- User Registration and Login
+- Product Management
 - Shopping Cart
-- Checkout
+- Checkout System
 - Admin Dashboard
-- Order Management
 - Responsive Design
 
 ## Technologies Used
@@ -19,6 +18,11 @@ BoldDiva is a beauty and cosmetics e-commerce website developed using Django, HT
 - CSS
 - JavaScript
 - SQLite
+
+## Installation
+1. Clone the repository.
+2. Install the required packages.
+3. Run the Django server.
 
 ## Author
 Shruti Kadiya
